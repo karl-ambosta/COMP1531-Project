@@ -3,10 +3,13 @@ import csv
 class Admin:
 
     def __init__(self, username, email):
-        self.username = username
-        self.email = email
+        self._username = username
+        self._email = email
+
+    def get_name(self):
+        return self._username
 
 class Survey:
 
     def __init__(self, course):
-        self.course = course
+        self._course = course
