@@ -12,15 +12,21 @@
       {% endfor %}
       </select>
       
+      
       <Form method="POST">
-      <button type="submit" name="questions">Submit</button>
+      <button type="submit" name="questions" value="1">Submit</button>
       <br></br>
-      </Form>
       <h2>Select Questions for Survey:</h2>
       {% for question in question_list %}
-      <input type ="radio", name="radio1" value="{{ question[0] }}">{{ question[0]}}<br></br>
+      <input type ="radio", name="option" value="{{ question [0]}}">{{ question[0]}}<br></br>
       {% endfor %}
-      
+      </Form>
+      <h2>Selected Questions:</h2>
+      <ol>
+      {% for line in selection %}
+      <li>{{ line }}</li>
+      {% endfor %}
+      </ol>
       
    </body>
    </html>
