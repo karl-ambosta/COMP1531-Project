@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+
+    <head>
+        <title>Survey page</title>
+    </head>
+
+    <body>
+
+        <h1>Survey</h1>
+        <Form method="POST">
+            <input type="checkbox" name="question" value=1 />(a)
+            <input type="checkbox" name="question" value=2 />(b)
+            <input type="checkbox" name="question" value=3 />(c)
+
+            <!-- {% for name in names %}
+                <input type="radio" name={{name}} value=name>TEST {{name}}
+            {% endfor %} -->
+
+            <input type="radio" name="radio1" value=1>Required
+            <input type="radio" name="radio1" value=2>Interest
+            <input type="radio" name="radio1" value=3>Prerequisite
+
+            <input type="radio" name="radio2" value=1>Required
+            <input type="radio" name="radio2" value=2>Interest
+            <input type="radio" name="radio2" value=3>Prerequisite
+
+            <button type="submit" name="input" value="1">Submit</button>
+        </Form>
+    </body>
+
+</html>

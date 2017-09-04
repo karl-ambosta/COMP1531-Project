@@ -4,6 +4,7 @@ from classes import *
 
 # Possibly include a global dictionary of admin users
 admins = {}
+names = ['q1','q2','q3']
 
 @app.route("/", methods=["GET", "POST"])
 def welcome():
@@ -62,8 +63,40 @@ def question():
 
     return render_template("question.html")
 
+@app.route("/Survey", methods=["GET", "POST"])
+def survey():
+
+    global names
+
+    if request.method == "POST":
+
+        #result = request.form["{{name}}"]
+        #if request.form["q1"] == 'q1':
+        #   print("WORKING")
+
+        # The following code verifies that we can get a list from checkbox answers
+        answers = request.form.getlist("question")
+        for response in answers:
+            print(response)
+            #print(answers[response])
+
+    return render_template("survey.html", names = names)
+
+'''
+
+    Admin contains a list of active surveys
+    Admin contains a dictionary of actual survey classes
+    Admin contains a list of quesitons
+    Admin contains a list of sample response
 
 
+    Get the current survey from the admin class
+        If there isn't one, print "NO SURVEY ACTIVE"
+        Else, 
 
+    Starting a survey
+        Get the course name from admin.get_active_survey()
+        We need a way of keeping track of what question the survey is up to
+        Each time it is loaded, it needs a string of the question and list of the answer strings
 
-
+'''
