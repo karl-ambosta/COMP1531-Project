@@ -20,3 +20,8 @@ def read_question():
 	    for row in reader:
 	        question_list.append(row)
     return question_list
+
+def write_results(results):
+	with open('results.csv','a') as csv_out:
+	    writer = csv.writer(csv_out)
+	    writer.writerow(results)
