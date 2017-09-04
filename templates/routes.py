@@ -43,9 +43,15 @@ def create():
 
     if request.method == "POST":
         
-        option = request.form["option"]
-        selected_questions.append(option)
+        questions = request.form.getlist("questions")
+        for line in questions:
+            print(line)
+        
+        # Below is for radio boxes
+        # option = request.form["option"]
+        # selected_questions.append(option)
         return render_template("create.html", course_list = read_course(), question_list = read_question(), selection = selected_questions)
+        return redirect(url_for("survey.html"), ) # ADD LISTS HERE
     
     
     return render_template("create.html", course_list = read_course(), question_list = read_question(), selection = selected_questions)
