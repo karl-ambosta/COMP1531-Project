@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+   <head>
+   <title>Create page</title>
+   </head>
+   <body>
+
+      <h1> CREATE </h1>
+      <select>
+      {% for course in course_list %}
+      <option value="{{ course[0] }}">{{ course[0] }}</option>
+      {% endfor %}
+      </select>
+      
+      <Form method="POST">
+      <button type="submit" name="questions">Submit</button>
+      <br></br>
+      </Form>
+      <h2>Select Questions for Survey:</h2>
+      {% for question in question_list %}
+      <input type ="radio", name="radio1" value="{{ question[0] }}">{{ question[0]}}<br></br>
+      {% endfor %}
+      
+      
+   </body>
+   </html>
