@@ -1,5 +1,5 @@
 from flask import Flask, redirect, render_template, request, url_for
-from server import app, user_input
+from server import app, user_input, course_list, selected_questions, selected_course
 from classes import *
 from reading_classes import *
 
@@ -8,7 +8,7 @@ admins = {}
 questions = ['q1','q2','q3']
 responses = ['a','b','c','d']
 message_flag = 0
-msg = {'1': 'Question Successfuly Added!','2':"Survey Successfuly Created"}
+msg = {'1': 'Question Successfully Added!','2':"Survey Successfuly Created"}
 
 @app.route("/", methods=["GET", "POST"])
 def welcome():
@@ -23,9 +23,8 @@ def welcome():
         print(ad.get_name())
         admins[0] = ad # Add the admin to a dictionary
 
-        #return redirect(url_for("dashboard", admin = ad))
-        return redirect(url_for("dashboard"))
-        #return redirect(url_for("dashboard", admin = ad.get_name()))
+        return redirect(url_for("dashboard", admin = ad))
+        return redirect(url_for("dashboard", admin = ad.get_name()))
     return render_template("welcome.html")
 
 @app.route("/Dashboard", methods=["GET", "POST"])
@@ -33,8 +32,11 @@ def dashboard():
 
     if request.method == "POST":
 
+        selected = admins[0].get_questions()
+    
         if request.form["input"] == "1":
-            return redirect(url_for("create"))
+            return render_template("create.html", questions = selected, course_list = read_course())
+            # return redirect(url_for("create"))
         elif request.form["input"] == "2":
             return redirect(url_for("question"))
         #elif request.form["input"] == "3":
@@ -45,7 +47,26 @@ def dashboard():
 @app.route("/Create", methods=["GET", "POST"])
 def create():
 
-    return render_template("create.html")
+    if request.method == "POST":
+        
+        # Read dropdown option submitted
+        questions = request.form.getlist("questions")
+        
+        
+        # use add_questions function here
+        
+        course = request.form["courses"]
+        print(course)
+        selected_course[:] = []
+        selected_course.append(course)
+        
+        # Below is for radio boxes
+        # option = request.form["option"]
+        # selected_questions.append(option)
+        return redirect(url_for("survey", course = selected_course, questions = admins[0].get_questions(), responses = admins[0].get_responses()))
+    
+    
+    return render_template("create.html", course_list = read_course(), questions = admins[0].get_questions())
 
 @app.route("/Question", methods=["GET", "POST"])
 def question():
