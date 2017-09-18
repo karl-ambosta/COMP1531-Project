@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+    <head>
+        <title>{{user[0][2] }} dashboard</title>
+    </head>
+    <body>
+
+        <h1>Dashboard</h1>
+
+        <h2>Hi, {{user[0][2]}}: {{user[0][0]}}!</h2>
+        
+        {% if user[0][2] == 'admin' %}
+        <Form method="POST">
+            <button type="submit" name="input" value="1">Manage Questions</button>
+            <button type="submit" name="input" value="2">Manage Surveys</button>
+            <button onclick="goBack()">Go Back</button>
+        </Form>
+        {% endif %}
+
+        {% if user[0][2] == 'student' %}
+            <h3>Student Enrolments:</h3>
+            {% for e in course %}
+                <h4>{{ e }}</h4>
+            {% endfor %}
+        {% endif %}
+
+        {% if user[0][2] == 'staff' %}
+            <h3>Courses:</h3>
+        {% endif %}
+
+    </body>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</html>

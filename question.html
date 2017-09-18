@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Question Pool</title>
+    <button onclick="goBack()">Go Back</button>
+    <button type="submit" name="input" value="add">Add new question</button>
+</head>
+    <body>
+
+        <h1> Question Pool </h1>
+        {% for q in question %}
+            {{ q[0] }}
+            <!-- PLACE RESPONSE OPTIONS HERE AS WELL -->
+            <br><br>
+        {% endfor %}  
+    </body>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+
+<style type="text/css">
+    button {
+        position: static;
+        top: 33px;
+        left: 500px;
+    }
+</style>
+
+</html>
+

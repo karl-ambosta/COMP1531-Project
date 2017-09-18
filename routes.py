@@ -1,148 +1,154 @@
 from flask import Flask, redirect, render_template, request, url_for
-from server import app, user_input, course_list, selected_questions, selected_course
+from server import app, user_input
 from classes import *
 from reading_classes import *
 
-# Possibly include a global dictionary of admin users
 admins = {}
-questions = ['q1','q2','q3']
-responses = ['a','b','c','d']
-message_flag = 0
-msg = {'1': 'Question Successfully Added!','2':"Survey Successfuly Created"}
+flag = 0
+msg = ['','Question Successfully Added!', "Survey Successfully Created!"]
+user = []
+enrol = []
+fileqs = []
+length = 0
 
 @app.route("/", methods=["GET", "POST"])
 def welcome():
     if request.method == "POST":
 
-        name = request.form["name"]
-        email = request.form["email"]
+        zid = request.form["zid"]
+        password = request.form["password"]
+        if read_password(zid,password) == None:
+            return render_template("welcome.html", message = 'Invalid login details. Try again')
+        user[:] = []
+        user.append(read_password(zid,password))
+        enrol[:] = []
+        enrol.append(read_enrolments(zid))
+        length = len(enrol[0])
 
-        print(name)
 
-        ad = Admin(name, email) # Create an admin object
-        print(ad.get_name())
-        admins[0] = ad # Add the admin to a dictionary
-
-        return redirect(url_for("dashboard", admin = ad))
-        return redirect(url_for("dashboard", admin = ad.get_name()))
-    return render_template("welcome.html")
+    return render_template("dashboard.html", user = user, course = enrol, length = length)
 
 @app.route("/Dashboard", methods=["GET", "POST"])
 def dashboard():
 
     if request.method == "POST":
 
-        selected = admins[0].get_questions()
-    
         if request.form["input"] == "1":
-            return render_template("create.html", questions = selected, course_list = read_course())
-            # return redirect(url_for("create"))
-        elif request.form["input"] == "2":
             return redirect(url_for("question"))
-        #elif request.form["input"] == "3":
-            #return redirect(url_for("view"))
+        elif request.form["input"] == "2":
+            return redirect(url_for("create"))
 
-    return render_template("dashboard.html", admin = admins[0].get_name())
+
+
+    return render_template("dashboard.html", user = user, course = enrol, length = length)
 
 @app.route("/Create", methods=["GET", "POST"])
 def create():
 
     if request.method == "POST":
-        
-        # Read dropdown option submitted
-        questions = request.form.getlist("questions")
-        
-        
-        # use add_questions function here
-        
-        course = request.form["courses"]
-        print(course)
-        selected_course[:] = []
-        selected_course.append(course)
-        
-        # Below is for radio boxes
-        # option = request.form["option"]
-        # selected_questions.append(option)
-        return redirect(url_for("survey", course = selected_course, questions = admins[0].get_questions(), responses = admins[0].get_responses()))
-    
-    
-    return render_template("create.html", course_list = read_course(), questions = admins[0].get_questions())
+
+        course = request.form["course"]
+
+        # Create a survey object
+        s = Survey(course)
+
+        # Retrieve questions
+        qu = admins[0].get_questions()
+
+        # Collect a list of all the selected questions
+        indexes = request.form.getlist("question")
+        selected = []
+        for j in indexes:
+            selected.append(qu[int(j)])
+
+        # Retrieve responses
+        re = admins[0].get_responses()
+
+        # Create a list containing both questions and responses
+        new = []
+        for e in selected:
+            print("E")
+            print(e)
+            # Find corresponding index of responses
+            i = qu.index(e)
+            new.append([e,re[i]])
+
+        print(new)
+
+        # Add the questions/responses to the survey
+        s.add_questions(new)
+
+        # Add the survey to the admin object
+        admins[0].add_survey(course,s)
+
+        return redirect(url_for("dashboard"))
+
+    return render_template("create.html", questions = admins[0].get_questions(), courses = read_course())
 
 @app.route("/Question", methods=["GET", "POST"])
 def question():
 
     if request.method == "POST":
 
+
         # Return to the dashboard if the user wishes to Cancel
-        if request.form["input"] == "1":
-            return redirect(url_for("dashboard"))
+        #if request.form["input"] == "1":
+         #   return redirect(url_for("dashboard"))
 
         # Collect the question text from the form
-        q = request.form["question"]
+#        q = request.form["question"]
 
         # Collect the response text from the form
-        responses = []
-        res = request.form["responseA"]
-        if res:
-            responses.append(res)
-        res = request.form["responseB"]
-        if res:
-            responses.append(res)
-        res = request.form["responseC"]
-        if res:
-            responses.append(res)
-        res = request.form["responseD"]
-        if res:
-            responses.append(res)
+ #       responses = []
+  #      res = request.form["responseA"]
+   #     if res:
+    #        responses.append(res)
+     #   res = request.form["responseB"]
+     #   if res:
+      #      responses.append(res)
+       # res = request.form["responseC"]
+        #if res:
+         #   responses.append(res)
+#        res = request.form["responseD"]
+ #       if res:
+  #          responses.append(res)
 
         # Add the questions and responses to the admin object
-        admins[0].add_question(q,responses)
+   #     admins[0].add_question(q,responses)
 
-        # TEMPORARILY CREATE A SURVEY FOR TESTING
-        admins[0].add_survey()
+        return render_template("question.html", question = read_question())
 
-        return redirect(url_for("dashboard"))
-
-    return render_template("question.html")
+    return render_template("question.html", question = read_question())
 
 @app.route("/Survey", methods=["GET", "POST"])
 def survey():
 
-    #Check that the admin has created a survey
-    # If they have, then do the following
-
+    # Check that the admin has created a survey
     # NEED TO ADD A CHECK FOR AN EXCEPTION: NO ADMINS IN DICTIONARY
     if admins[0].get_active_survey() == 0:
         return redirect(url_for("nothing"))
 
     # Get question data from the admin
-    questions = admins[0].get_questions()
-    responses = admins[0].get_responses()
-    #global questions
+    data = admins[0].get_survey(admins[0].get_active_survey()).get_q()
 
     if request.method == "POST":
 
-        # The following code verifies that we can get a list from checkbox answers
-        #answers = request.form.getlist("question")
-        #for response in answers:
-        #    print(response)
+        # Extract the survey reponses
+        responses = []
+        for d in data:
+            responses.append(d[1])
 
+        # Collect the survey results
         results = []
+        for d in range(len(data)):
+            i = request.form[str(d)]
+            results.append(responses[d][int(i)])
 
-        for q in questions:
-
-            # Add all multiple-choice responses to a list
-            results.append(request.form[q])
-            #result = [q, request.form[q],]
-            print(q, request.form[q])
-            #if request.form[q] == '1':
-             #   print("WORKING")
-              #  print(q)
         write_results(results)
 
         return redirect(url_for("complete"))
 
-    return render_template("survey.html", questions = questions, responses = responses)
+    return render_template("survey.html", data = data, course = admins[0].get_active_survey())
 
 @app.route("/Complete", methods=["GET", "POST"])
 def complete():
@@ -153,5 +159,3 @@ def complete():
 def nothing():
 
     return render_template("nothing.html")
-
-
