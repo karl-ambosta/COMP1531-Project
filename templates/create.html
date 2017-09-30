@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+
+    <head>
+        <title>Create Survey page</title>
+    </head>
+
+    <body>
+
+        <h1>Create Survey</h1>
+
+        <Form method="POST">
+        
+            <h2>Select a course:</h2>
+
+            <select name="course">
+                {% for c in courses %}
+                    <option value="{{c[0]}}">{{c[0]}}</option>
+                {% endfor %}
+            </select>
+
+            <h2>Select questions to be included in the survey:</h2>
+
+            {% for q in range(questions|length) %}
+                <h4>
+                    <input type="checkbox" name="question" value={{q}} />{{questions[q]}}
+                </h4>
+            {% endfor %}
+
+            <button type="submit" name="input" value="1">Submit</button>
+        </Form>
+    </body>
+
+</html>

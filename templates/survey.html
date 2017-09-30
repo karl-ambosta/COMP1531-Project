@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+
+    <head>
+        <title>Survey page</title>
+    </head>
+
+    <body>
+
+        <h1>Please complete the following survey for {{course}}</h1>
+        <Form method="POST">
+
+            {% for q in range(data|length) %}
+                <h2> {{data[q][0]}} </h2>
+                <h4>
+                {% for r in range(data[q][1]|length) %}
+                    <input type="radio" name={{q}} value={{r}}>{{data[q][1][r]}}
+                {% endfor %}
+                </h4>
+            {% endfor %}
+
+            <button type="submit" name="input" value="1">Submit</button>
+        </Form>
+    </body>
+
+</html>
