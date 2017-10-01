@@ -2,24 +2,45 @@ from flask import Flask, redirect, render_template, request, url_for
 from server import app, user_input
 from classes import *
 from reading_classes import *
+from authenticate import *
 
 admins = {}
 flag = 0
 msg = ['','Question Successfuly Added!', "Survey Successfuly Created!"]
 
 @app.route("/", methods=["GET", "POST"])
-def welcome():
+def login():    
+
     if request.method == "POST":
 
-        name = request.form["name"]
-        email = request.form["email"]
+        user_id = request.form["name"]
+        password = request.form["password"]
 
-        ad = Admin(name, email) # Create an admin object
+        # Send this information to the authentication module
+        result = authenticate(user_id,password)
+
+        if result == 'admin':
+            return redirect(url_for("dashboard"))
+        elif result == 'staff':
+            return redirect(url_for("staff_dash"))
+        elif result == 'student':
+            return redirect(url_for("student_dash"))
+        else:
+            return render_template("login.html")
+
+        ##################################################
+        ad = Admin(user_id, email) # Create an admin object
         admins[0] = ad # Add the admin to a dictionary
+        ##################################################
 
         return redirect(url_for("dashboard"))
 
-    return render_template("welcome.html")
+    # Fill in databases
+    # Possibly set a global flag to ensure that this only happens once
+    fill_database()    
+
+    return render_template("login.html")
+
 
 @app.route("/Dashboard", methods=["GET", "POST"])
 def dashboard():
@@ -32,6 +53,10 @@ def dashboard():
             return redirect(url_for("question"))
 
     return render_template("dashboard.html", admin = admins[0].get_name())
+
+
+
+
 
 @app.route("/Create", methods=["GET", "POST"])
 def create():
@@ -76,6 +101,11 @@ def create():
 
     return render_template("create.html", questions = admins[0].get_questions(), courses = read_course())
 
+
+
+
+
+
 @app.route("/Question", methods=["GET", "POST"])
 def question():
 
@@ -110,6 +140,11 @@ def question():
 
     return render_template("question.html")
 
+
+
+
+
+
 @app.route("/Survey", methods=["GET", "POST"])
 def survey():
 
@@ -139,6 +174,19 @@ def survey():
         return redirect(url_for("complete"))
 
     return render_template("survey.html", data = data, course = admins[0].get_active_survey())
+
+
+
+
+@app.route("/Staff_Dash", methods=["GET", "POST"])
+def staff_dash():
+
+    return render_template("staff_dash.html")
+
+@app.route("/Student_Dash", methods=["GET", "POST"])
+def student_dash():
+
+    return render_template("student_dash.html")
 
 @app.route("/Complete", methods=["GET", "POST"])
 def complete():
