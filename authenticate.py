@@ -6,10 +6,18 @@ def fill_database():
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()
 
+    # Create questions table
+    query = """CREATE TABLE IF NOT EXISTS questions (
+    qu VARCHAR(255) PRIMARY KEY,
+    type TEXT);"""
+    # type      0 = text
+    #           1 = multiple choice
+    cursorObj.execute(query)
+
     # Create passwords table
     query = """CREATE TABLE IF NOT EXISTS passwords (
     id INTEGER PRIMARY KEY,
-    pw VARCHAR(255),
+    password VARCHAR(255),
     role VARCHAR(10));"""
     cursorObj.execute(query)
 
@@ -18,17 +26,24 @@ def fill_database():
     for row in users:
         print(row[0], row[1], row[2])
 
-        string = """INSERT INTO passwords (id, pw, role)
+        string = """INSERT OR IGNORE INTO passwords (id, password, role)
         VALUES ("{i}", "{p}", "{r}")"""
 
         query = string.format(i=row[0], p=row[1], r=row[2])
         print(query)
         cursorObj.execute(query)
 
+        # Add the admin user to the database
+        query = """INSERT OR IGNORE INTO passwords (id, password, role)
+        VALUES (0, "admin", "admin")"""
+        cursorObj.execute(query)
+
+
     # Create courses table
     query = """CREATE TABLE IF NOT EXISTS courses (
     course VARCHAR(255),
-    offering VARCHAR(10));"""
+    offering VARCHAR(10),
+    status TEXT);"""
     cursorObj.execute(query)
 
     # Fill in courses table
@@ -36,8 +51,8 @@ def fill_database():
     for row in course:
         print(row[0], row[1])
 
-        string = """INSERT INTO courses (course, offering)
-        VALUES ("{c}", "{o}")"""
+        string = """INSERT OR IGNORE INTO courses (course, offering, status)
+        VALUES ("{c}", "{o}", "None")"""
 
         query = string.format(c=row[0], o=row[1])
         print(query)
@@ -48,6 +63,7 @@ def fill_database():
     id INTEGER,
     course VARCHAR(255),
     offering VARCHAR(10),
+    status INTEGER,
     FOREIGN KEY(id) REFERENCES passwords(id),
     FOREIGN KEY(course) REFERENCES enrolments(course),
     FOREIGN KEY(offering) REFERENCES enrolments(offering));"""
@@ -58,8 +74,8 @@ def fill_database():
     for row in enrolment:
         print(row[0], row[1], row[2])
 
-        string = """INSERT INTO enrolments (id, course, offering)
-        VALUES ("{i}", "{c}", "{o}")"""
+        string = """INSERT OR IGNORE INTO enrolments (id, course, offering, status)
+        VALUES ("{i}", "{c}", "{o}", 0)"""
 
         query = string.format(i=row[0], c=row[1], o=row[2])
         print(query)
@@ -75,7 +91,7 @@ def authenticate(user_id, password):
 
     #query = "SELECT pw, role from passwords where id = ?", user_id
     #result = cursorObj.execute(query)
-    for result in cursorObj.execute( "SELECT pw, role from passwords where id = ?", (user_id,) ):
+    for result in cursorObj.execute( "SELECT password, role from passwords where id = ?", (user_id,) ):
         print(result)
 
     connection.commit()

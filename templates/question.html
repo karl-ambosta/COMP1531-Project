@@ -8,14 +8,15 @@
         <h1>Create a question</h1>
         <Form method="POST">
             <input name="question" placeholder="Enter question text"/>
-            (a):
-            <input name="responseA" placeholder="Enter response text"/>
-            (b):
-            <input name="responseB" placeholder="Enter response text"/>
-            (c):
-            <input name="responseC" placeholder="Enter response text"/>
-            (d):
-            <input name="responseD" placeholder="Enter response text"/>
+            <br/>
+            <br/>
+            Will this question have text or multiple choice responses?
+            <br/>
+            <br/>
+            <input type="radio" name=type value="Text">Text
+            <input type="radio" name=type value="Multiple Choice">Multiple Choice
+            <br/>
+            <br/>
             <button type="submit" name="input" value="1">Cancel</button>
             <button type="submit" name="input" value="2">Add Question</button>
         </Form>
