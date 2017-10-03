@@ -3,16 +3,18 @@ from flask_login import LoginManager,login_user, current_user, login_required, l
 from model import User
 from server import app,login_manager
 from classes import *
-from reading_classes import *
 from authenticate import *
 from database import *
 
 admins = {}
 flag = 0
-msg = ['','Question Successfuly Added!', "Survey Successfuly Created!"]
+msg = ['','Question Successfully Added!', 'Question Not Added! Question Already Exists', 'Survey Successfully Created!', 'Survey Already Exists!']
 
 user_id = -1
-
+course_name = []
+choice = ''
+resnums = 0
+name = []
 
 
 def get_user(user_id):
@@ -87,13 +89,9 @@ def dashboard():
         elif request.form["input"] == "2":
             return redirect(url_for("question"))
         elif request.form["input"] == "3":
-            return redirect(url_for("question_pool"))
-        elif request.form["input"] == "4":
             return redirect(url_for("logout"))
 
-    return render_template("dashboard.html")
-
-
+    return render_template("dashboard.html", created = check_survey_status('review'))
 
 
 @app.route("/Create", methods=["GET", "POST"])
@@ -101,43 +99,53 @@ def create():
 
     if request.method == "POST":
 
-        course = request.form["course"]
+        # if admin wishes to cancel the creation of a survey
+        if request.form["input"] == "1":
+            return redirect(url_for("dashboard", created = check_survey_status('review')))
 
-        # Create a survey object
-        s = Survey(course)
+        # when the admin chooses a offering period
+        if request.form["input"] == "2":
+            choice = 'offer'
+            offering = request.form["offering"]
 
-        # Retrieve questions
-        qu = admins[0].get_questions()
 
-        # Collect a list of all the selected questions
-        indexes = request.form.getlist("question")
-        selected = []
-        for j in indexes:
-            selected.append(qu[int(j)])
+            c = get_courses()
+            o = []
 
-        # Retrieve responses
-        re = admins[0].get_responses()
+            course_name[:] = []
+            course_name.append(offering)
+            
+            # Get all the courses offered in that period
+            for i in c:
+                if i[1] == offering:
+                    o.append(i[0])
 
-        # Create a list containing both questions and responses
-        new = []
-        for e in selected:
-            print("E")
-            print(e)
-            # Find corresponding index of responses
-            i = qu.index(e)
-            new.append([e,re[i]])
+            return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = 'offer', courseoff = '', o = o)
 
-        print(new)
+        # When the admin submits a course name
+        if request.form["input"] == "3":
+            courseoff = 'course'
+            course_name.insert(0, request.form["course"])
 
-        # Add the questions/responses to the survey
-        s.add_questions(new)
+            return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = 'offer', courseoff = 'course', o = '')
 
-        # Add the survey to the admin object
-        admins[0].add_survey(course,s)
+        # When the admin submits the chosen questions
+        if request.form["input"] == "4":
+            
+            # Check for existing survey or create new one
+            if create_survey(course_name) == 'none': 
+                chosen_msg = msg[4]
+                print(chosen_msg)
+                return redirect(url_for("dashboard", created = check_survey_status('review')))
 
-        return redirect(url_for("dashboard"))
+            # Check which questions were submitted
+            q = request.form.getlist('check')
+            chosen_msg = msg[3]
+            print(chosen_msg)
+            return redirect(url_for("dashboard", created = check_survey_status('review')))
 
-    return render_template("create.html", questions = admins[0].get_questions(), courses = read_course())
+
+    return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = '', o = '')
 
 
 
@@ -154,39 +162,66 @@ def question():
         if request.form["input"] == "1":
             return redirect(url_for("dashboard"))
 
-        # Collect the question text from the form
-        q = request.form["question"]
+        # If the user wishes to add a question
+        if request.form["input"] == "2":
+            choice = 'add'
+            return render_template("question.html", choice = choice, questions = get_admin_questions())
 
-        # Collect question type
-        t = request.form["type"]
+        # If the user wishes to delete a question
+        if request.form["input"] == "3":
+            choice = 'delete'
+            return render_template("question.html", choice = choice, questions = get_admin_questions())
 
-        # Send data to server
-        add_question(q,t)
+        # After the user has cancelled the adding question process
+        if request.form["input"] == "4":
+            return redirect(url_for("question", choice = '', questions = get_admin_questions()))
+
+        # After the user has chosen the question type
+        if request.form["input"] == "5":
+            
+            t = request.form["type"]
+
+            q = request.form["addq"]
+
+            for quest in get_admin_questions():
+                if quest[0] == q:
+                    return render_template("question.html", choice = 'add', questions = get_admin_questions(), msg = msg[2])
+
+            # ADD QUESTION TO DATABASE
+            if t == 'Multiple Choice':
+                choice = 'add'
+                name.append(request.form["question"])
+                return render_template("question.html", choice = choice, response = 'MC', questions = get_admin_questions())
+            
+            # Collect chosen question name and type
+
+
+            add_question(q,t)
+
+            return redirect(url_for("question", choice = '', questions = get_admin_questions()))
+
+        if request.form["input"] == "6":
+            global resnums
+            resnums = request.form["resnum"]
+            try:
+                int(resnums)
+                return render_template("question.html", choice = 'add', response = 'MC', options = 'options', resnums = int(resnums), questions = get_admin_questions())
+            except ValueError:
+                return render_template("question.html", choice = 'add', response = 'MC', questions = get_admin_questions())
+
+            
+        if request.form["input"] == "7":
+            add_question(name[0], 'Multiple Choice')
+            return redirect(url_for("question", choice = '', questions = get_admin_questions()))
+
+        if request.form["input"] == "8":
+            delq = request.form["delq"]
+            delete_question(delq)
+            return redirect(url_for("question", choice = '', questions = get_admin_questions()))
 
         return redirect(url_for("dashboard"))
 
-    return render_template("question.html")
-
-
-
-
-
-
-@app.route("/Question_Pool", methods=["GET", "POST"])
-@login_required
-def question_pool():
-
-    if request.method == "POST":
-
-        # Return to the dashboard if the user wishes to Return
-        if request.form["input"] == "1":
-            return redirect(url_for("dashboard"))
-
-    questions = get_admin_questions()
-
-    return render_template("view_questions.html", questions = questions)
-
-
+    return render_template("question.html", choice = '', questions = get_admin_questions())
 
 
 @app.route("/Survey", methods=["GET", "POST"])
@@ -217,7 +252,7 @@ def survey():
 
         return redirect(url_for("complete"))
 
-    return render_template("survey.html", data = data, course = admins[0].get_active_survey())
+    return render_template("survey.html", data = data)
 
 
 
