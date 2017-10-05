@@ -133,7 +133,7 @@ def create():
         if request.form["input"] == "4":
             
             # Check for existing survey or create new one
-            if create_survey(course_name) == 'none': 
+            if create_survey(course_name) == 'exists': 
                 chosen_msg = msg[4]
                 print(chosen_msg)
                 return redirect(url_for("dashboard", created = check_survey_status('review')))
@@ -144,12 +144,7 @@ def create():
             print(chosen_msg)
             return redirect(url_for("dashboard", created = check_survey_status('review')))
 
-
     return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = '', o = '')
-
-
-
-
 
 
 @app.route("/Question", methods=["GET", "POST"])
@@ -177,25 +172,29 @@ def question():
             return redirect(url_for("question", choice = '', questions = get_admin_questions()))
 
         # After the user has chosen the question type
-        if request.form["input"] == "5":
+        if request.form["input"] == "5": 
             
+            # Collect chosen question name and type
             t = request.form["type"]
-
             q = request.form["addq"]
+
+            if t == '':
+                print('no type input')
+
+            if q == '':
+                print('no question input')
 
             for quest in get_admin_questions():
                 if quest[0] == q:
+                    print('if')
                     return render_template("question.html", choice = 'add', questions = get_admin_questions(), msg = msg[2])
-
             # ADD QUESTION TO DATABASE
             if t == 'Multiple Choice':
                 choice = 'add'
-                name.append(request.form["question"])
-                return render_template("question.html", choice = choice, response = 'MC', questions = get_admin_questions())
+                name[:] = []
+                name.append(request.form["addq"])
+                return render_template("question.html", choice = 'add', response = 'MC', questions = get_admin_questions(), msg = msg[1])
             
-            # Collect chosen question name and type
-
-
             add_question(q,t)
 
             return redirect(url_for("question", choice = '', questions = get_admin_questions()))

@@ -96,7 +96,7 @@ def create_survey(name):
     # If survey already exists, don't make a new one
     if status[0][2] != 'None':
         print('none if')
-        return 'none'
+        return 'exists'
 
     print('some else')
     # Else, change status to created
