@@ -80,33 +80,56 @@ def get_offerings():
 
     return offerings
 
-def create_survey(name):
+def create_survey(name, questions):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    # Change status of course to 'review'
+    cursorObj.execute("UPDATE courses SET status='review' WHERE course = '%s' AND offering = '%s'" % (name[0], name[1]))
+
+    query = """CREATE TABLE IF NOT EXISTS '%s_%s' (
+    question TEXT,
+    type TEXT,
+    response TEXT,
+    num, INT);""" % (name[0],name[1])
+
+    # Create table with course survey name
+    cursorObj.execute(query)
+
+    qss = []
+    for q in questions:
+        for qs in cursorObj.execute("SELECT * FROM questions WHERE qu = '%s'" % (q)):
+            if qs not in qss:
+                qss.append(qs)
+
+    for s in qss:
+        if s[1] == 'Multiple Choice':
+            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('%s', 'Multiple Choice', 'Agree', '0') " % (name[0],name[1], s[0]))
+            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('%s', 'Multiple Choice', 'Disagree', '0') " % (name[0],name[1], s[0]))
+
+    for t in qss:
+        if t[1] == 'Text':
+            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('%s', 'Text', 'Answer', '0') " % (name[0],name[1], t[0]))
+
+    connection.commit()
+    cursorObj.close()
+
+def check_survey_status(name):
 
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()
 
     status = []
 
-    # Check if specified course and offering already has a survey in any stage
+    # Check the status of course survey
     for w in cursorObj.execute("SELECT * FROM courses WHERE course = '%s' AND offering = '%s'" % (name[0], name[1])):
         if w not in status:
             status.append(w)
 
-    print(status[0][2])
-    # If survey already exists, don't make a new one
-    if status[0][2] != 'None':
-        print('none if')
-        return 'exists'
+    return status[0][2]
 
-    print('some else')
-    # Else, change status to created
-    cursorObj.execute("UPDATE courses SET status='review' WHERE course = '%s' AND offering = '%s'" % (name[0], name[1]))
-
-    connection.commit()
-    cursorObj.close()
-    return 'some'
-
-def check_survey_status(status):
+def get_survey_status(status):
 
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()

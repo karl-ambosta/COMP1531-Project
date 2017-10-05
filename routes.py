@@ -91,7 +91,7 @@ def dashboard():
         elif request.form["input"] == "3":
             return redirect(url_for("logout"))
 
-    return render_template("dashboard.html", created = check_survey_status('review'))
+    return render_template("dashboard.html", created = get_survey_status('review'))
 
 
 @app.route("/Create", methods=["GET", "POST"])
@@ -101,7 +101,7 @@ def create():
 
         # if admin wishes to cancel the creation of a survey
         if request.form["input"] == "1":
-            return redirect(url_for("dashboard", created = check_survey_status('review')))
+            return redirect(url_for("dashboard", created = get_survey_status('review')))
 
         # when the admin chooses a offering period
         if request.form["input"] == "2":
@@ -120,31 +120,33 @@ def create():
                 if i[1] == offering:
                     o.append(i[0])
 
-            return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = 'offer', courseoff = '', o = o)
+            return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = 'offer', courseoff = '', offers = o)
 
         # When the admin submits a course name
         if request.form["input"] == "3":
             courseoff = 'course'
             course_name.insert(0, request.form["course"])
 
-            return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = 'offer', courseoff = 'course', o = '')
+            return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
 
         # When the admin submits the chosen questions
         if request.form["input"] == "4":
             
             # Check for existing survey or create new one
-            if create_survey(course_name) == 'exists': 
+            if check_survey_status(course_name) != 'None': 
                 chosen_msg = msg[4]
                 print(chosen_msg)
-                return redirect(url_for("dashboard", created = check_survey_status('review')))
+                return redirect(url_for("dashboard", created = get_survey_status('review')))
 
             # Check which questions were submitted
-            q = request.form.getlist('check')
+            qus = request.form.getlist('check')
+            print('qus = ',qus)
+            create_survey(course_name,qus)
             chosen_msg = msg[3]
             print(chosen_msg)
-            return redirect(url_for("dashboard", created = check_survey_status('review')))
+            return redirect(url_for("dashboard", created = get_survey_status('review'), msg = chosen_msg))
 
-    return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = '', o = '')
+    return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = '', offers = '')
 
 
 @app.route("/Question", methods=["GET", "POST"])
