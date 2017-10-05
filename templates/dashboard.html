@@ -9,11 +9,32 @@
 
         <Form method="POST">
             <button type="submit" name="input" value="1">Create Survey</button>
-            <button type="submit" name="input" value="2">Add Question</button>
-            <button type="submit" name="input" value="3">View Questions</button>
-            <button type="submit" name="input" value="4">LOGOUT</button>
+            <button type="submit" name="input" value="2">Manage Questions</button>
+            <button type="submit" name="input" value="3">LOGOUT</button>
+
+        <h3>Surveys in Review Stage:</h3>
+
+            {%if created %}
+                {% for s in created %}
+                    {{ s[0] }} {{ s[1] }} <br>
+                {% endfor %}
+            
+            {% else %}
+                <h4>No surveys in the review stage</h4>
+
+            {% endif %}
+
+        <h3>Active Surveys:</h3>
+
+        
+
+            {%if msg %}
+            <h3>Here is msg:</h3>
+                    {{ msg }}
+            {% endif %}
 
         </Form>
+
 
     </body>
 </html>

@@ -9,25 +9,58 @@
 
         <h1>Create Survey</h1>
 
-        <Form method="POST">
-        
-            <h2>Select a course:</h2>
 
-            <select name="course">
-                {% for c in courses %}
-                    <option value="{{c[0]}}">{{c[0]}}</option>
-                {% endfor %}
+        <Form method="POST">
+
+        <button type="submit" name="input" value="1">Cancel</button>
+
+            <h2>Select an offering:</h2>
+            
+            <select name="offering">
+                <option value="defaulto">Select Offering</option>
+
+                {% for o in offerings %}
+                    <option value="{{ o }}">{{ o }}</option>
+                {% endfor %}  
+
             </select>
 
-            <h2>Select questions to be included in the survey:</h2>
+            <button type="submit" name="input" value="2">Submit</button>
 
-            {% for q in range(questions|length) %}
-                <h4>
-                    <input type="checkbox" name="question" value={{q}} />{{questions[q]}}
-                </h4>
-            {% endfor %}
+                {% if choice == 'offer' %}
+                    <h2>Select a course:</h2>
 
-            <button type="submit" name="input" value="1">Submit</button>
+                    <select name="course">
+                        <option value="defaultc">Select Course</option>
+                        
+                        {% for c in o %}
+                            <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                        
+                        
+                    </select>
+
+                    <button type="submit" name="input" value="3">Submit</button>
+
+                
+
+                    {% if courseoff == 'course' %}
+
+                    <h2>Choose questions for survey:</h2>
+                        <hr>
+                        {% for q in questions %}
+                            <input type="checkbox" name="check" value="{{ q[0] }}">{{ q[0] }} ({{q[1]}} Response)
+                            <hr>
+                        {% endfor %}
+
+                    <button type="submit" name="input" value="4">Submit</button>
+
+                    {% endif %}
+
+                {% endif %}
+
+
+
         </Form>
     </body>
 
