@@ -13,22 +13,28 @@
             <h1>Please complete the following survey for {{course_name[0]}}</h1>
             {% for cs in cs_data %}
 
-                {{ cs }}<br>
+                <b>{{ cs }}</b>
+                <br>
 
                 {% for d in data %}
 
                     {% if d[0] == cs %}
 
                         {% if d[1] == 'Multiple Choice' %}
-                            <input type="radio" name="radio" value="{{ d[2] }}">{{ d[2] }}<br>
-                        {% endif %}
+                            <input type="radio" name="{{d[0]}}" value="{{ d[2] }}">{{ d[2] }}<br>
 
-                        {% if d[1] == 'Text' %}
-                         <input type="text" name="answer">
+                        {% elif d[1] == 'Text' %}
+                         <input type="text" name="{{ d[0] }}">
+                         <br>
                          {% endif %}
 
                     {% endif %}
+
                 {% endfor %}
+
+            <br>
+            {% endfor %}
+            <br>
 
             <button type="submit" name="input" value="1">Submit Survey</button>
 

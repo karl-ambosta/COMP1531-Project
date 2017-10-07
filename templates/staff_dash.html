@@ -14,17 +14,23 @@
 
         <h3>Surveys in Review Stage:</h3>
 
-        {% if user_enrols %}
-        	<button type="submit" name="input" value="{{user_enrols[0][0]}}_{{user_enrols[0][1]}}">{{user_enrols[0][0]}} {{user_enrols[0][1]}}</button>
-            
-        {% else %}
-        	<h4>No surveys in the review stage</h4>
+        {% for u in user_enrols %}
+            {% if u[2] == 'review' %}
+        	<button type="submit" name="input" value="{{u[0]}}_{{u[1]}}">{{u[0]}} {{u[1]}}</button>
+            {% endif %}
+        {% endfor %}
 
-		{% endif %}
+        <br>
 
         <h3>Active Surveys:</h3>
-		
+		{% for u in user_enrols %}
+            {% if u[2] == 'active' %}
+            {{u[0]}} {{u[1]}}
+            {% endif %}
+        {% endfor %}
 
+        <br>
+        
 		</Form>
     </body>
 </html>
