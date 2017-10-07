@@ -9,9 +9,9 @@ def fill_database():
     # Create questions table
     query = """CREATE TABLE IF NOT EXISTS questions (
     qu VARCHAR(255) PRIMARY KEY,
-    type TEXT);"""
-    # type      0 = text
-    #           1 = multiple choice
+    type VARCHAR(255),
+    option VARCHAR(255));"""
+    
     cursorObj.execute(query)
 
     # Create passwords table

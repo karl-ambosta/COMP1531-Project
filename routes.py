@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, url_for, session
 from flask_login import LoginManager,login_user, current_user, login_required, logout_user
 from model import User
 from server import app,login_manager
@@ -162,6 +162,79 @@ def question():
 
     if request.method == "POST":
 
+        # BACK - Return to the dashboard
+        if request.form["input"] == "1":
+            return redirect(url_for("dashboard"))
+
+        # ADD QUESTION
+        if request.form["input"] == "2":
+            return render_template("question.html", add_question = True, questions = get_admin_questions())
+
+        # DELETE QUESTION
+        if request.form["input"] == "3":
+            return render_template("question.html", delete_question = True, questions = get_admin_questions())
+
+        # CANCEL - Cancel the creation of the current question
+        if request.form["input"] == "4":
+            return render_template("question.html", questions = get_admin_questions())
+
+        # Question has been entered
+        if request.form["input"] == "5":
+
+            # Collect the question text, response type and option
+            qu = request.form["addq"]
+            re = request.form["type"]
+            op = request.form["option"]
+
+            # Multiple choice question -> proceed to collect MC responses
+            if[re == "Multiple Choice"]:
+                # Store the question details in a temporary session
+                session['Temp_Question'] = [qu,re,op]
+                return render_template("question.html", set_MC_resnum = True, questions = get_admin_questions())
+
+            # Store text-response question in database
+            else:
+                add_question(qu,re,op,'None')
+                return render_template("question.html", questions = get_admin_questions())
+
+        # Collect desired number of MC responses
+        if request.form["input"] == "6":
+            n = int(request.form["resnum"])
+            l = session['Temp_Question']
+            l.append(n)
+            session['Temp_Question'] = l
+            return render_template("question.html", MC_resnum = n, questions = get_admin_questions())
+
+        # Store MC-response question in database
+        if request.form["input"] == "7":
+
+            # Retrieve temporary session data
+            data = session['Temp_Question']
+
+            # Get a list of the responses
+            responses = []
+            n = data[3]
+            for i in range(1,n+1):
+                responses.append(request.form[str(i)])
+
+            # Remove temporary session data
+            session.pop('Temp_Question', None)
+
+            # Add the question to the database
+            add_question(data[0],data[1],responses)
+
+            return render_template("question.html", questions = get_admin_questions())
+
+    return render_template("question.html", questions = get_admin_questions())
+
+
+"""
+@app.route("/Question", methods=["GET", "POST"])
+@login_required
+def question():
+
+    if request.method == "POST":
+
         # Return to the dashboard if the user wishes to Cancel
         if request.form["input"] == "1":
             return redirect(url_for("dashboard"))
@@ -230,7 +303,7 @@ def question():
         return redirect(url_for("dashboard"))
 
     return render_template("question.html", choice = '', questions = get_admin_questions())
-
+"""
 
 @app.route("/Survey", methods=["GET", "POST"])
 def survey():
