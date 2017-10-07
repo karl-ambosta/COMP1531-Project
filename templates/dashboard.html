@@ -14,8 +14,8 @@
 
         <h3>Surveys in Review Stage:</h3>
 
-            {%if created %}
-                {% for s in created %}
+            {%if review %}
+                {% for s in review %}
                     {{ s[0] }} {{ s[1] }} <br>
                 {% endfor %}
             
@@ -26,10 +26,29 @@
 
         <h3>Active Surveys:</h3>
 
+        {%if active %}
+                {% for a in active %}
+                    {{ a[0] }} {{ a[1] }} 
+                    <button type="submit" name="input" value="{{a[0]}}_{{a[1]}}">Close Survey</button>
+                    <br>
+                {% endfor %}
+            
+            {% else %}
+                <h4>No active surveys</h4>
 
-            {%if msg %}
-            <h3>Here is msg:</h3>
-                    {{ msg }}
+            {% endif %}
+
+        <h3>Active Surveys:</h3>
+
+        {%if closed %}
+                {% for c in closed %}
+                    {{ c[0] }} {{ c[1] }} 
+                    <br>
+                {% endfor %}
+            
+            {% else %}
+                <h4>No closed surveys</h4>
+
             {% endif %}
 
         </Form>

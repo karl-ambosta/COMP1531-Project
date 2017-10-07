@@ -60,11 +60,11 @@
 
         
         <h1>Question Pool</h1>
-            <hr>
+            
             {% if msg == 'Question Successfully Added!' %}
                 {{ msg }}
             {% endif %}
-
+            <hr>
             {% for q in questions %}
                 <b>{{ q[0] }}</b> <br>
                 Response Type: {{q[1]}}

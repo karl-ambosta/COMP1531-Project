@@ -6,20 +6,32 @@
     </head>
 
     <body>
+    <Form method="POST">
 
-        <h1>Please complete the following survey for {{course}}</h1>
-        <Form method="POST">
+            <button type="submit" name="input" value="0">Back</button>
 
-            {% for q in range(data|length) %}
-                <h2> {{data[q][0]}} </h2>
-                <h4>
-                {% for r in range(data[q][1]|length) %}
-                    <input type="radio" name={{q}} value={{r}}>{{data[q][1][r]}}
+            <h1>Please complete the following survey for {{course_name[0]}}</h1>
+            {% for cs in cs_data %}
+
+                {{ cs }}<br>
+
+                {% for d in data %}
+
+                    {% if d[0] == cs %}
+
+                        {% if d[1] == 'Multiple Choice' %}
+                            <input type="radio" name="radio" value="{{ d[2] }}">{{ d[2] }}<br>
+                        {% endif %}
+
+                        {% if d[1] == 'Text' %}
+                         <input type="text" name="answer">
+                         {% endif %}
+
+                    {% endif %}
                 {% endfor %}
-                </h4>
-            {% endfor %}
 
-            <button type="submit" name="input" value="1">Submit</button>
+            <button type="submit" name="input" value="1">Submit Survey</button>
+
         </Form>
     </body>
 
