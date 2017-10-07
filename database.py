@@ -1,15 +1,15 @@
 import sqlite3
 
 # Add a question to the pool
-def add_question(qu, type, option):
+def add_question(qu, type, option, responses):
 
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()
 
-    string = """INSERT INTO questions (qu, type, option)
-    VALUES ("{q}", "{t}", "{o}")"""
+    string = """INSERT INTO questions (qu, type, option, responses)
+    VALUES ("{q}", "{t}", "{o}", "{r}")"""
 
-    query = string.format(q=qu, t=type, o=option)
+    query = string.format(q=qu, t=type, o=option, r=responses)
     print(query)
     cursorObj.execute(query)
 

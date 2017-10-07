@@ -10,7 +10,8 @@ def fill_database():
     query = """CREATE TABLE IF NOT EXISTS questions (
     qu VARCHAR(255) PRIMARY KEY,
     type VARCHAR(255),
-    option VARCHAR(255));"""
+    option VARCHAR(255),
+    responses VARCHAR(255));"""
     
     cursorObj.execute(query)
 

@@ -186,8 +186,12 @@ def question():
             re = request.form["type"]
             op = request.form["option"]
 
+            print(re)
+
             # Multiple choice question -> proceed to collect MC responses
-            if[re == "Multiple Choice"]:
+            if re == "Multiple Choice":
+
+                print("HEY")
                 # Store the question details in a temporary session
                 session['Temp_Question'] = [qu,re,op]
                 return render_template("question.html", set_MC_resnum = True, questions = get_admin_questions())
@@ -195,7 +199,7 @@ def question():
             # Store text-response question in database
             else:
                 add_question(qu,re,op,'None')
-                return render_template("question.html", questions = get_admin_questions())
+                return render_template("question.html", set_MC_resnum = False, questions = get_admin_questions())
 
         # Collect desired number of MC responses
         if request.form["input"] == "6":
@@ -221,7 +225,7 @@ def question():
             session.pop('Temp_Question', None)
 
             # Add the question to the database
-            add_question(data[0],data[1],responses)
+            add_question(data[0],data[1],data[2],responses)
 
             return render_template("question.html", questions = get_admin_questions())
 

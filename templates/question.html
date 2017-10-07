@@ -38,7 +38,7 @@
             <button type="submit" name="input" value="5">Next</button>
 
         <!-- Collect the desired number of MC responses -->
-        {% elif set_MC_resnum %}
+        {% elif set_MC_resnum == True %}
 
             <h1>Create a question</h1>
             How many responses will this multiple choice question have?
@@ -77,30 +77,12 @@
 
         {% endif %}
 
-
-
         <!-- Delete a question -->
         {% if delete_question %}
             <h1>Delete a question</h1>
             <input name="delq" placeholder="Enter question to delete"/>
             <button type="submit" name="input" value="8">Submit</button>
         {% endif %}
-
-            {% if response == 'MC' %}
-                Enter the number of responses desired:
-                <input name="resnum" placeholder="Enter number of responses"/>
-                <button type="submit" name="input" value="6">Submit</button>
-                <br/>
-                <br/>
-
-                {% if options == 'options' %}
-                    {% for i in range(1, resnums+1) %}
-                        {{i}}. <input name="response{{i}}" placeholder="response{{ i }}"/>
-                    {% endfor %}
-                    <button type="submit" name="input" value="7">Finish</button>
-                {% endif %}
-
-            {% endif %}
 
         
         <br/><br/><hr>
