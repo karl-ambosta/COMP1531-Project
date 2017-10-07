@@ -1,0 +1,69 @@
+<!doctype html>
+
+<html>
+    <head>
+      <title>UNSW Survey System</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+
+    <Form method="POST">
+
+
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="http://127.0.0.1:5000/Student_Dash">{{user}}</a>
+        </div>
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="http://127.0.0.1:5000/Student_Dash">Home</a></li>
+          <li><a href="http://127.0.0.1:5000/Survey">Open Surveys</a></li>
+          <li><a href="http://127.0.0.1:5000/Survey">Closed Surveys</a></li>
+        </ul>
+        <button class="btn btn-danger navbar-btn" type="submit" name="input" value="1">Logout</button>
+      </div>
+    </nav>
+
+    <div class="container">
+    <h1>Welcome {{user}}</h1>
+    <p>Student dashboard.</p>
+    </div>
+
+          <table class="ui celled table">
+            <thead
+              <tr>
+                <td><h2>Courses</h2></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                  <td>Course Name</td>
+                  <td>Open Surveys</td>
+                  <td>Closed Surveys</td>
+              </tr>
+              <tr>
+                  {% for course in enrolments %}
+                  <tr>
+                    <td> {{ course[0] }}</td>
+                    <td class="selectable">
+                      <a href="#">No open surveys</a>
+                    </td>
+                    <td class="selectable">
+                      <a href="#">No closed surveys</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+              </tr>
+            </tbody>
+
+          </table>
+
+    </Form>
+
+    </body>
+</html>
