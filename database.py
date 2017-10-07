@@ -134,16 +134,17 @@ def check_survey_status(name):
 
     return status[0][2]
 
-# gets particular status
+# For each course that the student is enrolled in, this function collects the surveys of a
+# particular status i.e. for a student, will get 'active' and 'closed' surveys.
 def get_survey_status(course_name, status):
 
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()
 
     st = []
-    #if status == 'review':
-    for s in cursorObj.execute("SELECT DISTINCT * FROM courses WHERE course=? AND status =?", (course_name, status)):
-            st.append(s)
+    if status == 'active':
+        for s in cursorObj.execute("SELECT DISTINCT * FROM courses WHERE course=? AND status =?", (course_name, status)):
+                st.append(s)
 
     connection.commit()
     cursorObj.close()
@@ -165,3 +166,84 @@ def get_student_enrolments(user_id):
     cursorObj.close()
 
     return enrolled
+
+def get_survey_of_status(table_name, status):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    st = []
+    for s in cursorObj.execute("SELECT DISTINCT * FROM '%s' WHERE status = '%s'" % (table_name, status)):
+            st.append(s)
+
+    connection.commit()
+    cursorObj.close()
+
+    return st
+
+def get_survey_data(course_name):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    survey_questions = []
+    for sq in cursorObj.execute("SELECT DISTINCT * FROM '%s'" % (course_name)):
+            survey_questions.append(sq)
+
+    connection.commit()
+    cursorObj.close()
+
+    return survey_questions
+
+def add_to_survey(survey_name, question):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    question_check = []
+
+    for i in cursorObj.execute("SELECT DISTINCT * FROM questions WHERE qu = '%s'" % (question)):
+            question_check.append(i)
+
+    if i[1] == 'Multiple Choice':
+        cursorObj.execute("INSERT INTO '%s' (question, type, response, num) VALUES ('%s', 'Multiple Choice', 'Agree', '0') " % (survey_name, question))
+        cursorObj.execute("INSERT INTO '%s' (question, type, response, num) VALUES ('%s', 'Multiple Choice', 'Disagree', '0') " % (survey_name, question))
+
+    if i[1] == 'Text':
+        cursorObj.execute("INSERT INTO '%s' (question, type, response, num) VALUES ('%s', 'Text', 'Answer', '0') " % (survey_name, question))
+
+    connection.commit()
+    cursorObj.close()
+
+def release_survey(course_name):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    # Change status of course to 'active'
+    cursorObj.execute("UPDATE courses SET status='active' WHERE course = '%s' AND offering = '%s'" % (course_name[0], course_name[1]))
+
+    connection.commit()
+    cursorObj.close()
+
+def close_survey(course_name):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    # Change status of course to 'active'
+    cursorObj.execute("UPDATE courses SET status='closed' WHERE course = '%s' AND offering = '%s'" % (course_name[0], course_name[1]))
+
+    connection.commit()
+    cursorObj.close()
+
+def submit_survey(user_id, course_name):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    # Change status of course to 'active'
+    cursorObj.execute("UPDATE enrolments SET status='complete' WHERE course = '%s' AND offering = '%s'" % (course_name[0], course_name[1]))
+
+    connection.commit()
+    cursorObj.close()

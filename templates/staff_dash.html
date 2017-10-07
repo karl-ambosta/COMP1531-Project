@@ -6,11 +6,25 @@
 
     <body>
 
-        <h1>Staff Dashboard</h1>
+        <h1>Staff Dashboard: {{ user }}</h1>
 
         <Form method="POST">
             <button type="submit" name="input" value="1">Logout</button>
-        </Form>
+        
 
+        <h3>Surveys in Review Stage:</h3>
+
+        {% if user_enrols %}
+        	<button type="submit" name="input" value="{{user_enrols[0][0]}}_{{user_enrols[0][1]}}">{{user_enrols[0][0]}} {{user_enrols[0][1]}}</button>
+            
+        {% else %}
+        	<h4>No surveys in the review stage</h4>
+
+		{% endif %}
+
+        <h3>Active Surveys:</h3>
+		
+
+		</Form>
     </body>
 </html>
