@@ -11,10 +11,13 @@ flag = 0
 msg = ['','Question Successfully Added!', 'Question Not Added! Question Already Exists', 'Survey Successfully Created!', 'Survey Already Exists!']
 
 user_id = -1
+user_role = []
 course_name = []
 choice = ''
 resnums = 0
 name = []
+clicked_survey = []
+c_s_data = []
 
 
 def get_user(user_id):
@@ -28,10 +31,6 @@ def load_user(user_id):
     # get user information from db
     user = get_user(user_id)
     return user
-
-
-
-
 
 @app.route("/", methods=["GET", "POST"])
 def login():    
@@ -91,7 +90,12 @@ def dashboard():
         elif request.form["input"] == "3":
             return redirect(url_for("logout"))
 
-    return render_template("dashboard.html", created = get_survey_status('review'))
+        else:
+            close = request.form["input"]
+            f = close.split('_')
+            close_survey(f)
+
+    return render_template("dashboard.html", review = get_survey_of_status('courses','review'), active = get_survey_of_status('courses', 'active'), closed = get_survey_of_status('courses','closed'))
 
 
 @app.route("/Create", methods=["GET", "POST"])
@@ -101,7 +105,7 @@ def create():
 
         # if admin wishes to cancel the creation of a survey
         if request.form["input"] == "1":
-            return redirect(url_for("dashboard", created = get_survey_status('review')))
+            return redirect(url_for("dashboard", created = get_survey_of_status('courses','review')))
 
         # when the admin chooses a offering period
         if request.form["input"] == "2":
@@ -136,15 +140,15 @@ def create():
             if check_survey_status(course_name) != 'None': 
                 chosen_msg = msg[4]
                 print(chosen_msg)
-                return redirect(url_for("dashboard", created = get_survey_status('review')))
+                return redirect(url_for("dashboard", created = get_survey_of_status('courses', 'review')))
 
             # Check which questions were submitted
             qus = request.form.getlist('check')
-            print('qus = ',qus)
+            print('qus = ', qus)
             create_survey(course_name,qus)
             chosen_msg = msg[3]
             print(chosen_msg)
-            return redirect(url_for("dashboard", created = get_survey_status('review'), msg = chosen_msg))
+            return redirect(url_for("dashboard", created = get_survey_of_status('courses','review'), msg = chosen_msg))
 
     return render_template("create.html", questions = get_admin_questions(), courses = get_courses(), offerings = get_offerings(), choice = '', offers = '')
 
@@ -228,34 +232,16 @@ def question():
 @app.route("/Survey", methods=["GET", "POST"])
 def survey():
 
-    # Check that the admin has created a survey
-    # NEED TO ADD A CHECK FOR AN EXCEPTION: NO ADMINS IN DICTIONARY
-    if admins[0].get_active_survey() == 0:
-        return redirect(url_for("nothing"))
-
-    # Get question data from the admin
-    data = admins[0].get_survey(admins[0].get_active_survey()).get_q()
-
     if request.method == "POST":
 
-        # Extract the survey reponses
-        responses = []
-        for d in data:
-            responses.append(d[1])
+        if request.form["input"] == "0":
+            return redirect(url_for("student_dash"))
 
-        # Collect the survey results
-        results = []
-        for d in range(len(data)):
-            i = request.form[str(d)]
-            results.append(responses[d][int(i)])
+        if request.form["input"] == "1":
+            print('Submit Survey')
+            return redirect(url_for("complete"))
 
-        write_results(results)
-
-        return redirect(url_for("complete"))
-
-    return render_template("survey.html", data = data)
-
-
+    return render_template("survey.html", course_name = clicked_survey, user = user_role, data = get_survey_data(clicked_survey[0]), cs_data = c_s_data)
 
 
 @app.route("/Staff_Dash", methods=["GET", "POST"])
@@ -266,7 +252,22 @@ def staff_dash():
         if request.form["input"] == "1":
             return redirect(url_for("logout"))
 
-    return render_template("staff_dash.html")
+        else:
+            clicked_survey[:] = []
+            c_s = request.form["input"]
+            clicked_survey.append(request.form["input"])
+            get_survey_data(c_s)
+            user_role[:] = []
+            user_role.append('staff')
+
+            c_s_data[:] = []
+            for c in get_survey_data(c_s):
+                if c[0] not in c_s_data:
+                    c_s_data.append(c[0])
+
+            return redirect(url_for("review"))
+
+    return render_template("staff_dash.html", review = get_survey_of_status('courses','review'), user = user_id, user_enrols = get_enrolment_surveys(user_id, 'staff', 'review'))
 
 @app.route("/Student_Dash", methods=["GET", "POST"])
 @login_required
@@ -276,7 +277,22 @@ def student_dash():
         if request.form["input"] == "1":
             return redirect(url_for("logout"))
 
-    return render_template("student_dash.html")
+        else:
+            clicked_survey[:] = []
+            c_s = request.form["input"]
+            clicked_survey.append(c_s)
+            get_survey_data(c_s)
+            user_role[:] = []
+            user_role.append('student')
+
+            c_s_data[:] = []
+            for c in get_survey_data(c_s):
+                if c[0] not in c_s_data:
+                    c_s_data.append(c[0])
+
+            return redirect(url_for("survey"))
+
+    return render_template("student_dash.html", user = user_id, user_enrols = get_enrolment_surveys(user_id, 'student', 'active'), incomplete = get_survey_of_status('enrolments', 'incomplete'))
 
 @app.route('/logout')
 def logout():
@@ -291,9 +307,41 @@ def logout():
 @app.route("/Complete", methods=["GET", "POST"])
 def complete():
 
+    if request.method == "POST":
+
+        if request.form["input"] == "1":
+            return redirect(url_for("student_dash"))
+
     return render_template("complete.html")
 
 @app.route("/Nothing", methods=["GET", "POST"])
 def nothing():
 
     return render_template("nothing.html")
+
+@app.route("/Review", methods=["GET", "POST"])
+def review():
+
+    if request.method == "POST":
+
+        if request.form["input"] == "0":
+            return redirect(url_for("staff_dash"))
+
+        if request.form["input"] == "1":
+            d = clicked_survey[0]
+            e = d.split('_')
+            release_survey(e)
+            return redirect(url_for("staff_dash"))
+
+        else:
+            add_q = request.form["input"]
+            c_s_data.append(add_q)
+            add_to_survey(clicked_survey[0],add_q)
+            return redirect(url_for("review"))
+
+
+    return render_template("review.html", course_name = clicked_survey, user = user_role, data = get_survey_data(clicked_survey[0]), cs_data = c_s_data, questions = get_admin_questions())
+
+
+
+
