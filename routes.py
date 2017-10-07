@@ -18,6 +18,7 @@ resnums = 0
 name = []
 clicked_survey = []
 c_s_data = []
+enrolments = []
 
 
 def get_user(user_id):
@@ -48,6 +49,7 @@ def login():
         if result == 'admin':
             user = User(user_id)
             login_user(user)
+            print(get_enrolment_surveys(user_id, 'admin'))
             return redirect(url_for("dashboard"))
         elif result == 'staff':
             user = User(user_id)
@@ -56,15 +58,16 @@ def login():
         elif result == 'student':
             user = User(user_id)
             login_user(user)
+
+            # gets the courses that student is enrolled in. Return value is in the form of a list.
+            enrolments = get_student_enrolments(user_id)
+
+             # get open surveys for particular course
+            open_surveys = []
+
             return redirect(url_for("student_dash"))
         else:
             return render_template("login.html")
-
-        ##################################################
-        # DO NOT NEED
-        ad = Admin(user_id, email) # Create an admin object
-        admins[0] = ad # Add the admin to a dictionary
-        ##################################################
 
         return redirect(url_for("dashboard"))
 
@@ -95,7 +98,7 @@ def dashboard():
             f = close.split('_')
             close_survey(f)
 
-    return render_template("dashboard.html", review = get_survey_of_status('courses','review'), active = get_survey_of_status('courses', 'active'), closed = get_survey_of_status('courses','closed'))
+    return render_template("dashboard.html", surveys = get_enrolment_surveys(user_id, 'admin'))
 
 
 @app.route("/Create", methods=["GET", "POST"])
@@ -236,9 +239,36 @@ def survey():
 
         if request.form["input"] == "0":
             return redirect(url_for("student_dash"))
+        
+        data = get_survey_data(clicked_survey[0])
+        print('data = ', data)
+
+        data_2 = []
+        submitted = []
+
+        for d in data:
+            if d[0] not in data_2:
+                data_2.append(d[0])
+
+        print(data_2)
 
         if request.form["input"] == "1":
             print('Submit Survey')
+
+            for q in get_admin_questions():
+                if q[0] in data_2:
+                    if q[1] == 'Multiple Choice':
+                        i = request.form.getlist(q[0])
+                        qi = q[0],'Multiple Choice',i[0]
+                        submitted.append(qi)
+
+                    elif q[1] == 'Text':
+                        i = request.form[q[0]]
+                        qi = q[0],'Text',i[0]
+                        submitted.append(qi)
+
+            submit_survey(user_id, clicked_survey[0], submitted)
+
             return redirect(url_for("complete"))
 
     return render_template("survey.html", course_name = clicked_survey, user = user_role, data = get_survey_data(clicked_survey[0]), cs_data = c_s_data)
@@ -268,30 +298,11 @@ def staff_dash():
 
             return redirect(url_for("review"))
 
-    return render_template("staff_dash.html", review = get_survey_of_status('courses','review'), user = user_id, user_enrols = get_enrolment_surveys(user_id, 'staff', 'review'))
+    return render_template("staff_dash.html", user = user_id, user_enrols = get_enrolment_surveys(user_id, 'staff'))
 
 @app.route("/Student_Dash", methods=["GET", "POST"])
 @login_required
 def student_dash():
-
-    # EDIT!: User_id is printing as '-1' so this is a temporary value until I figure out how to fix this.
-    user_id = 222
-
-    # gets the courses that student is enrolled in. Return value is in the form of a list.
-    enrolments = get_student_enrolments(user_id)
-
-                                                           ### EDIT ONCE FIXED!!
-    # get open surveys for particular course
-    open_surveys = []
-    print(enrolments)
-
-    '''
-    # EDIT!: loop seems to be the main cause of user_id not being read properly
-    for course in enrolments:
-        status = get_survey_status(course, 'active')
-        for survey in status:
-            open_surveys.append(survey[1])
-    '''
 
     if request.method == "POST":
         if request.form["input"] == "1":
@@ -300,6 +311,7 @@ def student_dash():
         else:
             clicked_survey[:] = []
             c_s = request.form["input"]
+            print('clicked =', c_s)
             clicked_survey.append(c_s)
             get_survey_data(c_s)
             user_role[:] = []
@@ -312,7 +324,7 @@ def student_dash():
 
             return redirect(url_for("survey"))
 
-    return render_template("student_dash.html", user = user_id, enrolments = enrolments)
+    return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = get_enrolment_surveys(user_id, 'student'))
 
 @app.route('/logout')
 def logout():

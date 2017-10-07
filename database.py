@@ -24,7 +24,7 @@ def delete_question(qu):
     # string = """DELETE FROMquestions WHERE question='%s' AND type='%s'""" % (qu, ty)
 
     q = (qu)
-    query = cursorObj.execute("DELETE FROM questions WHERE qu =?", q)
+    query = cursorObj.execute("DELETE FROM questions WHERE qu ='%s'", q)
     print(query)
 
     connection.commit()
@@ -60,6 +60,48 @@ def get_courses():
 
     return course
 
+def get_enrolment_surveys(user_id, role):
+
+    connection = sqlite3.connect('survey.db')
+    cursorObj = connection.cursor()
+
+    user_enrolments = []
+    enrol_survey_status = []
+    read_enrols = []
+
+    if role == 'admin':
+        for s in cursorObj.execute("SELECT * FROM courses"):
+            if s not in enrol_survey_status:
+                enrol_survey_status.append(s)
+
+    # Gather staff enrolments and append to user_enrolments
+    for u in cursorObj.execute("SELECT * FROM enrolments WHERE id = '%d'" % (int(user_id))):
+        if (u[1],u[2]) not in user_enrolments:
+            us = u[1],u[2]
+            user_enrolments.append(us)
+
+    if role == 'staff':
+        # From the staff's enrolments, check if the course has a survey in the review stage
+        for w in cursorObj.execute("SELECT DISTINCT * FROM courses WHERE course = '%s' AND offering = '%s'" % (user_enrolments[0][0], user_enrolments[0][1])):
+            if (w[0],w[1]) not in read_enrols:
+                ws = w[0],w[1]
+                read_enrols.append(ws)
+                enrol_survey_status.append(w)
+
+    if role == 'student':
+        for user in user_enrolments:
+            for v in cursorObj.execute("SELECT DISTINCT * FROM courses WHERE course = '%s' AND offering = '%s'" % (user[0], user[1])):
+                if (v[0],v[1]) not in read_enrols:
+                    vs = v[0],v[1]
+                    read_enrols.append(vs)
+                    enrol_survey_status.append(v)
+ 
+    connection.commit()
+    cursorObj.close()
+    print(enrol_survey_status)
+
+    return enrol_survey_status
+
 # Read the courses and gather the different offerings for the courses
 def get_offerings():
 
@@ -87,7 +129,7 @@ def create_survey(name, questions):
     cursorObj = connection.cursor()
 
     # Change status of course to 'review'
-    cursorObj.execute("UPDATE courses SET status='review' WHERE course =? AND offering=? ", (name[0], name[1]))
+    cursorObj.execute("UPDATE courses SET status='review' WHERE course ='%s' AND offering='%s' " % (name[0], name[1]))
 
     query = """CREATE TABLE IF NOT EXISTS '%s_%s' (
     question TEXT,
@@ -101,17 +143,17 @@ def create_survey(name, questions):
     qss = []
 
     for q in questions:
-        for qs in cursorObj.execute("SELECT DISTINCT * FROM questions WHERE qu =?", (q)):
+        for qs in cursorObj.execute("SELECT * FROM questions WHERE qu ='%s'" % (q)):
                 qss.append(qs)
 
     for s in qss:
         if s[1] == 'Multiple Choice':
-            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('?', 'Multiple Choice', 'Agree', '0') ", (name[0], name[1], s[0]))
-            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('?', 'Multiple Choice', 'Disagree', '0') ", (name[0], name[1], t[0]))
+            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('%s', 'Multiple Choice', 'Agree', '0') " % (name[0], name[1], s[0]))
+            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('%s', 'Multiple Choice', 'Disagree', '0') " % (name[0], name[1], s[0]))
 
     for t in qss:
         if t[1] == 'Text':
-            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('?', 'Text', 'Answer', '0') ", (name[0], name[1], t[0]))
+            cursorObj.execute("INSERT INTO '%s_%s' (question, type, response, num) VALUES ('%s', 'Text', 'Answer', '0') " % (name[0], name[1], t[0]))
 
     connection.commit()
     cursorObj.close()
@@ -125,7 +167,7 @@ def check_survey_status(name):
     status = []
 
     # Check the status of course survey
-    for w in cursorObj.execute("SELECT DISTINCT * FROM courses WHERE course =? AND offering =?", (name[0], name[1])):
+    for w in cursorObj.execute("SELECT * FROM courses WHERE course ='%s' AND offering ='%s'" % (name[0], name[1])):
             status.append(w)
 
 
@@ -143,7 +185,7 @@ def get_survey_status(course_name, status):
 
     st = []
     if status == 'active':
-        for s in cursorObj.execute("SELECT DISTINCT * FROM courses WHERE course=? AND status =?", (course_name, status)):
+        for s in cursorObj.execute("SELECT * FROM courses WHERE course='%s' AND status ='%s'" % (course_name, status)):
                 st.append(s)
 
     connection.commit()
@@ -159,7 +201,9 @@ def get_student_enrolments(user_id):
     cursorObj = connection.cursor()
 
     enrolled = []
-    for e in cursorObj.execute("SELECT DISTINCT course FROM enrolments WHERE id =?", (user_id,)):
+    for e in cursorObj.execute("SELECT * FROM enrolments WHERE id ='%s'" % (user_id)):
+        if e not in enrolled:
+            print(e)
             enrolled.append(e)
 
     connection.commit()
@@ -187,8 +231,17 @@ def get_survey_data(course_name):
     cursorObj = connection.cursor()
 
     survey_questions = []
+    text_questions = []
     for sq in cursorObj.execute("SELECT DISTINCT * FROM '%s'" % (course_name)):
+        print('sq = ', sq)
+
+        if sq[1] == 'Multiple Choice':
             survey_questions.append(sq)
+
+        elif sq[1] == 'Text':
+                if sq[0] not in text_questions:
+                    survey_questions.append(sq)
+                    text_questions.append(sq[0])
 
     connection.commit()
     cursorObj.close()
@@ -231,19 +284,36 @@ def close_survey(course_name):
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()
 
+    print('c[0] = ', course_name[0])
+    print('c[1] = ', course_name[1])
+
     # Change status of course to 'active'
     cursorObj.execute("UPDATE courses SET status='closed' WHERE course = '%s' AND offering = '%s'" % (course_name[0], course_name[1]))
 
     connection.commit()
     cursorObj.close()
 
-def submit_survey(user_id, course_name):
+def submit_survey(user_id, course_name, submitted_responses):
 
     connection = sqlite3.connect('survey.db')
     cursorObj = connection.cursor()
 
-    # Change status of course to 'active'
-    cursorObj.execute("UPDATE enrolments SET status='complete' WHERE course = '%s' AND offering = '%s'" % (course_name[0], course_name[1]))
+    print(submitted_responses)
+
+    # Change status of enrolment survey to 'complete'
+    #cursorObj.execute("UPDATE enrolments SET status='complete' WHERE course = '%s' AND offering = '%s'" % (course_name[0], course_name[1]))
+
+    for s in submitted_responses:
+        if s[1] == 'Multiple Choice':
+            for w in cursorObj.execute("SELECT * FROM '%s' WHERE question = '%s' AND response = '%s'" % (course_name, s[0], s[2])):
+                ww = int(w[3])
+                new = ww + 1
+                print(new)
+                cursorObj.execute("UPDATE '%s' SET num = '%d' WHERE question = '%s' AND response = '%s'" % (course_name, new, w[0], w[2]))
+
+        elif s[1] == 'Text':
+            print('s[2] = ', s[2])
+            cursorObj.execute("INSERT INTO '%s' (question, type, response, num) VALUES ('%s', 'Text', '%s', '1')" % (course_name, s[0], s[2]))
 
     connection.commit()
     cursorObj.close()
