@@ -218,11 +218,15 @@ def get_student_enrolments(user_id):
     cursorObj = connection.cursor()
 
     enrolled = []
+    already_in = []
     for e in cursorObj.execute("SELECT * FROM enrolments WHERE id ='%s'" % (user_id)):
-        if e not in enrolled:
-            print(e)
+        if (e[1],e[2]) not in already_in:
+            print('e = ', e)
+            already_in.append((e[1],e[2]))
             enrolled.append(e)
+            print(already_in)
 
+    print('enrolled = ', enrolled)
     connection.commit()
     cursorObj.close()
 
@@ -385,6 +389,14 @@ def submit_survey(user_id, course_name, submitted_responses):
             query = string.format(q=s[0], r=s[2])
             print('Text query = ',query)
             cursorObj.execute(query)
+
+
+
+    c = course_name.split('_')
+    string = string = """UPDATE enrolments SET status = 'complete' WHERE course = "{c}" AND offering = "{o}" """
+    query = string.format(c=c[0], o=c[1])
+    print('query = ', query)
+    cursorObj.execute(query)
 
     connection.commit()
     cursorObj.close()

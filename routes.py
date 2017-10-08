@@ -332,7 +332,7 @@ def student_dash():
 
             return redirect(url_for("survey"))
 
-    return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = get_enrolment_surveys(user_id, 'student'))
+    return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = get_enrolment_surveys(user_id, 'student'), enrols = get_student_enrolments(user_id))
 
 @app.route('/logout')
 def logout():
