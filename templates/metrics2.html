@@ -44,8 +44,9 @@
     {% for w in results %}
         {% if w[0] == d %}
             {% if w[1] == 'Text' %}
-                
+                {% if w[2][0] != 'Answer' %}
                     <li>{{ w[2][0] }}</li>
+                {% endif %}
                 
             {% endif %}
         {% endif %}
