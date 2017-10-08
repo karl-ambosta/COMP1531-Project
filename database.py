@@ -271,7 +271,10 @@ def get_survey_data(course_name):
             j = i.split(',')
             i = s[3].replace('[','').replace(']', '').replace("'",'')
             k = i.split(',')
-        questions_list.append([s[0],s[1],j,k])
+            questions_list.append([s[0],s[1],j,k])
+        
+        if s[1] == 'Text':
+            questions_list.append([s[0],s[1]])
 
     connection.commit()
     cursorObj.close()
