@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Staff Dashboard page</title>
+    </head>
+
+    <body>
+
+        <h1>Staff Dashboard: {{ user }}</h1>
+
+        <Form method="POST">
+            <button type="submit" name="input" value="1">Logout</button>
+        
+
+        <h3>Surveys in Review Stage:</h3>
+
+        {% for u in user_enrols %}
+            {% if u[2] == 'review' %}
+        	<button type="submit" name="input" value="{{u[0]}}_{{u[1]}}">{{u[0]}} {{u[1]}}</button>
+            {% endif %}
+        {% endfor %}
+
+        <br>
+
+        <h3>Active Surveys:</h3>
+		{% for u in user_enrols %}
+            {% if u[2] == 'active' %}
+            {{u[0]}} {{u[1]}}
+            {% endif %}
+        {% endfor %}
+
+        <br>
+        
+		</Form>
+    </body>
+</html>

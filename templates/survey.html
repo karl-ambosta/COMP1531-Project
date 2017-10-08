@@ -6,36 +6,40 @@
     </head>
 
     <body>
+    <Form method="POST">
 
-        <h1>Survey</h1>
-        <Form method="POST">
-            <!--
-            <input type="checkbox" name="question" value=1 />(a)
-            <input type="checkbox" name="question" value=2 />(b)
-            <input type="checkbox" name="question" value=3 />(c)
-            -->
+            <button type="submit" name="input" value="0">Back</button>
 
-            {% for q in questions %}
-                <h1> {{q}}: </h1>
-                <h1>
-                {% for r in responses %}
-                    {% for i in r %}
-                        <input type="radio" name={{q}} value={{i}}>{{i}}
-                    {% endfor %}
+            <h1>Please complete the following survey for {{course_name[0]}}</h1>
+            {% for cs in cs_data %}
+
+                <b>{{ cs }}</b>
+                <br>
+
+                {% for d in data %}
+
+                    {% if d[0] == cs %}
+
+                        {% if d[1] == 'Multiple Choice' %}
+                            {% for e in d[2] %}
+                            <input type="radio" name="{{d[0]}}" value="{{ e }}">{{ e }}<br>
+                            {% endfor %}
+
+                        {% elif d[1] == 'Text' %}
+                         <input type="text" name="{{ d[0] }}">
+                         <br>
+                         {% endif %}
+
+                    {% endif %}
+
                 {% endfor %}
-                </h1>
+
+            <br>
             {% endfor %}
+            <br>
 
-<!--
-            <input type="radio" name="radio1" value=1>Required
-            <input type="radio" name="radio1" value=2>Interest
-            <input type="radio" name="radio1" value=3>Prerequisite
+            <button type="submit" name="input" value="1">Submit Survey</button>
 
-            <input type="radio" name="radio2" value=1>Required
-            <input type="radio" name="radio2" value=2>Interest
-            <input type="radio" name="radio2" value=3>Prerequisite
--->
-            <button type="submit" name="input" value="1">Submit</button>
         </Form>
     </body>
 

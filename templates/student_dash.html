@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Student Dashboard page</title>
+    </head>
+
+    <body>
+
+        <h1>Student Dashboard: {{ user }}</h1>
+
+        <Form method="POST">
+            <button type="submit" name="input" value="1">Logout</button>
+            
+        <h3>Active Surveys:</h3>
+            {% for s in surv %}
+                {% if s[2] == 'active' %}
+                    <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}">{{s[0]}} {{s[1]}}</button>
+                {% endif %}
+            {% endfor %}
+        
+        </Form>
+    </body>
+</html>
