@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+
+    <head>
+        <title>Survey page</title>
+    </head>
+
+    <body>
+    <Form method="POST">
+
+            <button type="submit" name="input" value="0">Back</button>
+
+            <h1>Please complete the following survey for {{course_name[0]}}</h1>
+            {% for cs in cs_data %}
+
+                <b>{{ cs }}</b>
+                <br>
+
+                {% for d in data %}
+
+                    {% if d[0] == cs %}
+
+                        {% if d[1] == 'Multiple Choice' %}
+                            {% for e in d[2] %}
+                            <input type="radio" name="{{d[0]}}" value="{{ e }}">{{ e }}<br>
+                            {% endfor %}
+
+                        {% elif d[1] == 'Text' %}
+                         <input type="text" name="{{ d[0] }}">
+                         <br>
+                         {% endif %}
+
+                    {% endif %}
+
+                {% endfor %}
+
+            <br>
+            {% endfor %}
+            <br>
+
+            <button type="submit" name="input" value="1">Submit Survey</button>
+
+        </Form>
+    </body>
+
+</html>

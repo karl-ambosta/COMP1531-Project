@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Question Pool page</title>
+    </head>
+    <body>
+
+        <h1>Question Pool</h1>
+
+        <Form method="POST">
+            <button type="submit" name="input" value="1">Return to dashboard</button>
+        </Form>
+
+        <br/>
+        {% for q in questions %}
+            {{q[0]}}
+            <br/>
+        {% endfor %}
+
+
+    </body>
+</html>

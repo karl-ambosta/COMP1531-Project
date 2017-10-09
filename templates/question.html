@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Add Question page</title>
+        <style>
+        p{
+            text-indent: 50px;
+        }
+        </style>
+    </head>
+    <body>
+
+        <Form method="POST">
+
+        {% if add_question %}
+
+            <h1>Create a question</h1>
+            
+            {% if msg == 'Question Not Added! Question Already Exists' %}
+                <strong>{{ msg }}</strong>
+            {% endif %}
+
+            <h4>Enter the question:</h4>
+            <input name="addq" placeholder="Question text"/>
+            <br/>
+            <br/>
+
+            <h4>Select a response type:</h4>
+            <p><input type="radio" name="type" value="Text">Text</p>
+            <p><input type="radio" name="type" value="Multiple Choice">Multiple Choice</p>
+
+            <h4>Is this question compulsory?</h4>
+            <p><input type="radio" name="option" value="Mandatory">Yes, make it mandatory</p>
+            <p><input type="radio" name="option" value="Optional">No, leave it as optional</p>
+            <br/>
+
+            <button type="submit" name="input" value="4">Cancel</button>
+            <button type="submit" name="input" value="5">Next</button>
+
+        <!-- Collect the desired number of MC responses -->
+        {% elif set_MC_resnum == True %}
+
+            <h1>Create a question</h1>
+            How many responses will this multiple choice question have?
+            <br/>
+            <br/>
+            <select name="resnum">
+            {% for n in range(1,11) %}
+                <option value="{{ n }}">{{ n }}</option>
+            {% endfor %}
+            </select>
+            <br/>
+            <br/>
+            <button type="submit" name="input" value="4">Cancel</button>
+            <button type="submit" name="input" value="6">Next</button>
+
+        <!-- Collect MC responses -->
+        {% elif MC_resnum %}
+            <h1>Create a question</h1>
+            Enter responses:
+            <br/>
+            <br/>
+            {% for i in range(1, MC_resnum+1) %}
+                {{i}}. <input name="{{i}}" placeholder="response{{ i }}"/>
+                <br/>
+            {% endfor %}
+            <br/>
+            <br/>
+            <button type="submit" name="input" value="4">Cancel</button>
+            <button type="submit" name="input" value="7">Finish</button>
+
+        {% else %}
+            <br/>
+            <button type="submit" name="input" value="1">Back</button>
+            <button type="submit" name="input" value="2">Add Question</button>
+            <button type="submit" name="input" value="3">Delete Question</button>
+
+        {% endif %}
+
+        <!-- Delete a question -->
+        {% if delete_question %}
+            <h1>Delete a question</h1>
+            <input name="delq" placeholder="Enter question to delete"/>
+            <button type="submit" name="input" value="8">Submit</button>
+        {% endif %}
+
+        
+        <br/><br/><hr>
+        <h1>Question Pool</h1>
+
+            {% if msg == 'Question Successfully Added!' %}
+                {{ msg }}
+            {% endif %}
+            <hr>
+            {% for q in questions %}
+                <b>{{ q[0] }}</b> <br>
+                Response Type: {{q[1]}} <br>
+                {{ q[2]}} Question
+                <hr>
+            {% endfor %}
+
+        </Form>
+
+    </body>
+</html>
