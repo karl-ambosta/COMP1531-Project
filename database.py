@@ -1,7 +1,6 @@
 import sqlite3
 
 # Add a question to the pool
-# @staticmethod
 def add_question(qu, type, option, responses):
 
     connection = sqlite3.connect('survey.db')

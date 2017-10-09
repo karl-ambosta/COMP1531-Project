@@ -1,8 +1,7 @@
 from flask import Flask, redirect, render_template, request, url_for, session
 from flask_login import LoginManager,login_user, current_user, login_required, logout_user
-from model import *
 from server import app,login_manager
-from classes import *
+from model import *
 from authenticate import *
 from database import *
 from database2 import *
