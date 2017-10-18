@@ -5,15 +5,48 @@
     </head>
     <body>
 
-        <h1>Dashboard</h1>
+        <h1>Admin Dashboard</h1>
 
-        Hi, {{admin}}!
-      
         <Form method="POST">
             <button type="submit" name="input" value="1">Create Survey</button>
-            <button type="submit" name="input" value="2">Add Question</button>
-            <button type="submit" name="input" value="3">View Questions</button>
+            <button type="submit" name="input" value="2">Manage Questions</button>
+            <button type="submit" name="input" value="3">Metrics</button>
+            <button type="submit" name="input" value="4">LOGOUT</button>
+
+        <h3>Surveys in Review Stage:</h3>
+
+            {% for f in surveys %}
+                {% if f[2] == 'review' %}
+                    {{ f[0] }} {{ f[1] }} <br>
+                {% endif %}
+            {% endfor %}
+
+        <br>
+
+        <h3>Active Surveys:</h3>
+
+            {% for f in surveys %}
+                {% if f[2] == 'active' %}
+                    {{ f[0] }} {{ f[1] }} 
+                    <button type="submit" name="input" value="{{f[0]}}_{{f[1]}}">Close Survey</button>
+                    <br>
+                {% endif %}
+            {% endfor %}
+
+        <br>
+
+        <h3>Closed Surveys:</h3>
+
+        {% for f in surveys %}
+                {% if f[2] == 'closed' %}
+                    {{ f[0] }} {{ f[1] }} <br>
+                {% endif %}
+            {% endfor %}
+
+        <br>
+
         </Form>
+
 
     </body>
 </html>

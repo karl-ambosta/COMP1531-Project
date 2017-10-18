@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+	<head>
+        <title>Metrics page</title>
+    </head>
+    
+    <body>
+
+    <h1>Metrics</h1>
+
+    	<Form method="POST">
+            <button type="submit" name="input" value="1">Back</button>
+            <br>
+            
+            <h3>Active Surveys:</h3>
+
+            <select name="active">
+                <option value="defaulto">Select Active Survey</option>
+                    {% for r in results %}
+                        {% if r[2] == 'active' %}
+                            <option value="{{ r[0] }}_{{ r[1] }}">{{ r[0] }} {{ r[1] }}</option>
+
+                {% endif %}
+            {% endfor %}
+            </select>
+            <button type="submit" name="input" value="2">View Active Survey Results</button>
+
+
+            <h3>Closed Surveys:</h3>
+
+            <select name="closed">
+                <option value="defaulto">Select Closed Survey</option>
+                    {% for r in results %}
+                        {% if r[2] == 'closed' %}
+                            <option value="{{ r[0] }}_{{ r[1] }}">{{ r[0] }} {{ r[1] }}</option>
+
+                {% endif %}
+            {% endfor %}
+            </select>
+            <button type="submit" name="input" value="3">View Closed Survey Results</button>
+
+    	</Form>
+    </body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+	<head>
+        <title>Metrics page</title>
+    </head>
+    
+    <body>
+
+    	<Form method="POST">
+            <button type="submit" name="input" value="1">Back</button>
+            <br>
+        </Form>
+
+        <h1>Metrics</h1>
+
+
+{% for d in diff %}
+    <b>Question: {{ d }}</b>
+    <br>
+
+    {% for r in results %}
+
+        {% if r[0] == d %}
+            {% if r[1] == 'Multiple Choice' %}
+            <table style="width:100%">
+                <tr>
+                    {% for s in r[2] %}
+                        <td><b>{{ s }}</b></td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for t in r[3] %}
+                        <td>Chosen by {{ t }} time(s)</td>
+                    {% endfor %}
+                </tr>
+            </table>
+
+            <br>
+            {% endif %}
+
+        {% endif %}
+    {% endfor %}
+    <ul>
+    {% for w in results %}
+        {% if w[0] == d %}
+            {% if w[1] == 'Text' %}
+                {% if w[2][0] != 'Answer' %}
+                    <li>{{ w[2][0] }}</li>
+                {% endif %}
+                
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    </ul>
+    <br>
+{% endfor %}
+</table>
+    
+
+
+    </body>
+</html>
+
