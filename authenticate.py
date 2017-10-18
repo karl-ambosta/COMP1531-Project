@@ -79,7 +79,7 @@ def fill_database():
         print(row[0], row[1], row[2])
 
         string = """INSERT OR IGNORE INTO enrolments (id, course, offering, status)
-        VALUES ("{i}", "{c}", "{o}", None)"""
+        VALUES ("{i}", "{c}", "{o}", "None")"""
 
         query = string.format(i=row[0], c=row[1], o=row[2])
         print(query)
