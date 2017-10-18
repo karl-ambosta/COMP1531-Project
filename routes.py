@@ -73,9 +73,7 @@ def login():
 
     # Fill in databases
     # Possibly set a global flag to ensure that this only happens once
-    if flag == 0:
-        fill_database()
-        flag += 1
+    fill_database()
 
     return render_template("login.html")
 
