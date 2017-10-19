@@ -346,20 +346,20 @@ class Database(object):
 
 
 
-database = Database()
-try:
-	database.populate_table()
-except:
-	pass
-database.submit_survey('100', 'COMP9333', '17s2', [('What is your name?', 'Karl Ambosta'), ('What is your age?', '19')])
-try:
-	i = database.survey_results('COMP9333', '17s2')
-	for e in i:
-		print(e.course_name, e.offering, e.question, e.response)
+# database = Database()
+# try:
+#	database.populate_table()
+#except:
+#	pass
+#database.submit_survey('100', 'COMP9333', '17s2', [('What is your name?', 'Karl'), ('What is your course?', 'Comp1531')])
+#try:
+#	i = database.survey_results('COMP9333', '17s2')
+#	for e in i:
+#		print(e.course_name, e.offering, e.question, e.response)
 
-except Exception as e:
-	print(e)
+#except Exception as e:
+#	print(e)
 
-for q in database.get_admin_questions():
-		print(q.name, q.types, q.option, q.responses)
+#for q in database.get_admin_questions():
+#		print(q.name, q.types, q.option, q.responses)
 
