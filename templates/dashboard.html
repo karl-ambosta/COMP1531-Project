@@ -21,26 +21,26 @@
                 {% endif %}
             {% endfor %}
 
+            {% for c in created %}
+                    {{ c[0] }} {{ c[1] }} <br>
+            {% endfor %}
+
         <br>
 
         <h3>Active Surveys:</h3>
 
-            {% for f in surveys %}
-                {% if f[2] == 'active' %}
-                    {{ f[0] }} {{ f[1] }} 
-                    <button type="submit" name="input" value="{{f[0]}}_{{f[1]}}">Close Survey</button>
-                    <br>
-                {% endif %}
+            {% for a in active %}
+                {{ a[0] }} {{ a[1] }} 
+                <button type="submit" name="input" value="{{a[0]}}_{{a[1]}}">Close Survey</button>
+                <br>
             {% endfor %}
 
         <br>
 
         <h3>Closed Surveys:</h3>
 
-        {% for f in surveys %}
-                {% if f[2] == 'closed' %}
-                    {{ f[0] }} {{ f[1] }} <br>
-                {% endif %}
+            {% for c in closed %}
+                {{ c[0] }} {{ c[1] }} <br>
             {% endfor %}
 
         <br>

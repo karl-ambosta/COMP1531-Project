@@ -3,13 +3,16 @@ from flask_login import LoginManager,login_user, current_user, login_required, l
 from server import app,login_manager
 from model import *
 from authenticate import *
-from database import *
+# from database import *
 from database2 import *
+from Assignment_Class import *
+from collections import Counter
 
 admins = {}
 flag = 0
 msg = ['','Question Successfully Added!', 'Question Not Added! Question Already Exists', 'Survey Successfully Created!', 'Survey Already Exists!']
 
+database = Database()
 user_id = -1
 user_role = []
 course_name = []
@@ -38,6 +41,7 @@ def login():
 
     global user_id
 
+
     if request.method == "POST":
 
         user_id = request.form["name"]
@@ -49,23 +53,25 @@ def login():
         if result == 'admin':
             user = User(user_id)
             login_user(user)
-            print(get_enrolment_surveys(user_id, 'admin'))
             return redirect(url_for("dashboard"))
+
         elif result == 'staff':
             user = User(user_id)
             login_user(user)
             return redirect(url_for("staff_dash"))
+
         elif result == 'student':
             user = User(user_id)
             login_user(user)
 
             # gets the courses that student is enrolled in. Return value is in the form of a list.
-            enrolments = db_utils.get_student_enrolments(user_id)
+            enrolments = database.get_user_enrolments(user_id)
 
-             # get open surveys for particular course
+            # get open surveys for particular course
             open_surveys = []
 
             return redirect(url_for("student_dash"))
+
         else:
             return render_template("login.html")
 
@@ -73,8 +79,15 @@ def login():
 
     # Fill in databases
     # Possibly set a global flag to ensure that this only happens once
-    fill_database()
+    try:
+        database.create_table()
+    except:
+        pass
 
+    try:
+        database.populate_table()
+    except:
+        pass
     return render_template("login.html")
 
 
@@ -98,9 +111,9 @@ def dashboard():
         else:
             close = request.form["input"]
             f = close.split('_')
-            db_utils.close_survey(f)
+            database.close_survey(f)
 
-    return render_template("dashboard.html", surveys = db_utils.get_enrolment_surveys(user_id, 'admin'))
+    return render_template("dashboard.html", created = database.get_survey_of_status('review'), active = database.get_survey_of_status('active'), closed = database.get_survey_of_status('closed')) # surveys = database.get_enrolment_surveys(user_id, 'admin'))
 
 
 @app.route("/Create", methods=["GET", "POST"])
@@ -110,7 +123,7 @@ def create():
 
         # if admin wishes to cancel the creation of a survey
         if request.form["input"] == "1":
-            return redirect(url_for("dashboard", created = db_utils.get_survey_of_status('courses','review')))
+            return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review')))
 
         # when the admin chooses a offering period
         if request.form["input"] == "2":
@@ -118,7 +131,7 @@ def create():
             offering = request.form["offering"]
 
 
-            c = db_utils.get_courses()
+            c = database.get_courses()
             o = []
 
             course_name[:] = []
@@ -126,36 +139,36 @@ def create():
 
             # Get all the courses offered in that period
             for i in c:
-                if i[1] == offering:
-                    o.append(i[0])
+                if i.offering == offering:
+                    o.append(i.name)
 
-            return render_template("create.html", questions = db_utils.get_admin_questions(), courses = db_utils.get_courses(), offerings = db_utils.get_offerings(), choice = 'offer', courseoff = '', offers = o)
+            return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = 'offer', courseoff = '', offers = o)
 
         # When the admin submits a course name
         if request.form["input"] == "3":
             courseoff = 'course'
             course_name.insert(0, request.form["course"])
 
-            return render_template("create.html", questions = db_utils.get_admin_questions(), courses = db_utils.get_courses(), offerings = db_utils.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
+            return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
 
         # When the admin submits the chosen questions
         if request.form["input"] == "4":
 
             # Check for existing survey or create new one
-            if db_utils.check_survey_status(course_name) != 'None':
+            if database.check_survey_status(course_name) != 'None':
                 chosen_msg = msg[4]
                 print(chosen_msg)
-                return redirect(url_for("dashboard", created = db_utils.get_survey_of_status('courses', 'review')))
+                return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review')))
 
             # Check which questions were submitted
             qus = request.form.getlist('check')
             print('qus = ', qus)
-            db_utils.create_survey(course_name,qus)
+            database.create_survey(course_name,qus)
             chosen_msg = msg[3]
             print(chosen_msg)
-            return redirect(url_for("dashboard", created = db_utils.get_survey_of_status('courses','review'), msg = chosen_msg))
+            return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review'), msg = chosen_msg))
 
-    return render_template("create.html", questions = db_utils.get_admin_questions(), courses = db_utils.get_courses(), offerings = db_utils.get_offerings(), choice = '', offers = '')
+    return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = '', offers = '')
 
 
 @app.route("/Question", methods=["GET", "POST"])
@@ -170,15 +183,15 @@ def question():
 
         # ADD QUESTION
         if request.form["input"] == "2":
-            return render_template("question.html", add_question = True, questions = db_utils.get_admin_questions())
+            return render_template("question.html", add_question = True, questions = database.get_admin_questions())
 
         # DELETE QUESTION
         if request.form["input"] == "3":
-            return render_template("question.html", delete_question = True, questions = db_utils.get_admin_questions())
+            return render_template("question.html", delete_question = True, questions = database.get_admin_questions())
 
         # CANCEL - Cancel the creation of the current question
         if request.form["input"] == "4":
-            return render_template("question.html", questions = db_utils.get_admin_questions())
+            return render_template("question.html", questions = database.get_admin_questions())
 
         # Question has been entered
         if request.form["input"] == "5":
@@ -193,16 +206,16 @@ def question():
 
                 # Store the question details in a temporary session
                 session['Temp_Question'] = [qu,re,op]
-                return render_template("question.html", set_MC_resnum = True, questions = db_utils.get_admin_questions())
+                return render_template("question.html", set_MC_resnum = True, questions = database.get_admin_questions())
 
             # Store text-response question in database
             else:
 
                 # Add question to database
-                q = quest(qu,re,op)
-                db_utils.add_question(q)
+                # q = quest(qu,op,re)
+                database.add_question(qu, 'Text', op, None)
 
-                return render_template("question.html", set_MC_resnum = False, questions = db_utils.get_admin_questions())
+                return render_template("question.html", set_MC_resnum = False, questions = database.get_admin_questions())
 
         # Collect desired number of MC responses
         if request.form["input"] == "6":
@@ -210,7 +223,7 @@ def question():
             l = session['Temp_Question']
             l.append(n)
             session['Temp_Question'] = l
-            return render_template("question.html", MC_resnum = n, questions = db_utils.get_admin_questions())
+            return render_template("question.html", MC_resnum = n, questions = database.get_admin_questions())
 
         # Store MC-response question in database
         if request.form["input"] == "7":
@@ -223,26 +236,27 @@ def question():
             n = data[3]
             for i in range(1,n+1):
                 responses.append(request.form[str(i)])
+                res_str = ",".join(responses)
 
             # Remove temporary session data
             session.pop('Temp_Question', None)
 
             # Add question to the database
-            q = quest(data[0],data[1],data[2])
-            q.add_responses(responses)
-            db_utils.add_question(q)
+            # q = quest(data[0],data[1],data[2])
+            # q.add_responses(responses)
+            database.add_question(data[0], data[1], data[2], res_str)
 
-            return render_template("question.html", questions = db_utils.get_admin_questions())
+            return render_template("question.html", questions = database.get_admin_questions())
 
         # Delete the specified question from the survey
         if request.form["input"] == "8":
 
             q = request.form["delq"]
-            db_utils.delete_question(q)
+            database.delete_question(q)
 
-            return render_template("question.html", questions = db_utils.get_admin_questions())
+            return render_template("question.html", questions = database.get_admin_questions())
 
-    return render_template("question.html", questions = db_utils.get_admin_questions())
+    return render_template("question.html", questions = database.get_admin_questions())
 
 @app.route("/Survey", methods=["GET", "POST"])
 def survey():
@@ -252,7 +266,7 @@ def survey():
         if request.form["input"] == "0":
             return redirect(url_for("student_dash"))
         
-        data = db_utils.get_survey_data(clicked_survey[0])
+        data = database.get_survey_data(clicked_survey[0])
         print('data = ', data)
 
         data_2 = []
@@ -262,28 +276,26 @@ def survey():
             if d[0] not in data_2:
                 data_2.append(d[0])
 
-        print('data_2 = ',data_2)
-
         if request.form["input"] == "1":
 
-            for q in db_utils.get_admin_questions():
+            for q in database.get_admin_questions():
                 if q[0] in data_2:
                     if q[1] == 'Multiple Choice':
                         i = request.form.getlist(q[0])
-                        qi = q[0],'Multiple Choice',i
+                        qi = q[0],i
                         submitted.append(qi)
 
                     elif q[1] == 'Text':
                         i = request.form[q[0]]
-                        qi = q[0],'Text',i
+                        qi = q[0],i
                         submitted.append(qi)
                 print(submitted)
 
-            db_utils.submit_survey(user_id, clicked_survey[0], submitted)
+            database.submit_survey(user_id, clicked_survey[0], submitted)
 
             return redirect(url_for("complete"))
 
-    return render_template("survey.html", course_name = clicked_survey, user = user_role, data = db_utils.get_survey_data(clicked_survey[0]), cs_data = c_s_data)
+    return render_template("survey.html", course_name = clicked_survey, user = user_role, data = database.get_survey_data(clicked_survey[0]), cs_data = c_s_data)
 
 
 @app.route("/Staff_Dash", methods=["GET", "POST"])
@@ -295,22 +307,22 @@ def staff_dash():
             return redirect(url_for("logout"))
 
         else:
-            clicked_survey[:] = []                                  # resetting list
+            clicked_survey[:] = []                              # resetting list
             c_s = request.form["input"]
             clicked_survey.append(request.form["input"])
-            db_utils.get_survey_data(c_s)                                    # gets data from selected course
+            database.get_survey_data(c_s)                       # gets data from selected course
             user_role[:] = []
             user_role.append('staff')
 
             # getting name of question
             c_s_data[:] = []
-            for c in db_utils.get_survey_data(c_s):
+            for c in database.get_survey_data(c_s):
                 if c[0] not in c_s_data:
                     c_s_data.append(c[0])
 
             return redirect(url_for("review"))
 
-    return render_template("staff_dash.html", user = user_id, user_enrols = db_utils.get_enrolment_surveys(user_id, 'staff'))
+    return render_template("staff_dash.html", user = user_id, user_enrols = database.get_enrolment_surveys(user_id, 'staff'))
 
 @app.route("/Student_Dash", methods=["GET", "POST"])
 @login_required
@@ -323,20 +335,19 @@ def student_dash():
         else:
             clicked_survey[:] = []
             c_s = request.form["input"]
-            print('clicked =', c_s)
             clicked_survey.append(c_s)
-            db_utils.get_survey_data(c_s)
+            database.get_survey_data(c_s)
             user_role[:] = []
             user_role.append('student')
 
             c_s_data[:] = []
-            for c in db_utils.get_survey_data(c_s):
+            for c in database.get_survey_data(c_s):
                 if c[0] not in c_s_data:
                     c_s_data.append(c[0])
 
             return redirect(url_for("survey"))
 
-    return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = db_utils.get_enrolment_surveys(user_id, 'student'), enrols = db_utils.get_student_enrolments(user_id))
+    return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = database.get_enrolment_surveys(user_id, 'student'), enrols = database.get_user_enrolments(user_id))
 
 @app.route('/logout')
 def logout():
@@ -374,17 +385,17 @@ def review():
         if request.form["input"] == "1":
             d = clicked_survey[0]
             e = d.split('_')
-            db_utils.release_survey(e)
+            database.release_survey(e)
             return redirect(url_for("staff_dash"))
 
         else:
             add_q = request.form["input"]
             c_s_data.append(add_q)
-            db_utils.add_to_survey(clicked_survey[0],add_q)
+            database.add_to_survey(clicked_survey[0],add_q)
             return redirect(url_for("review"))
 
-
-    return render_template("review.html", course_name = clicked_survey, user = user_role, data = db_utils.get_survey_data(clicked_survey[0]), cs_data = c_s_data, questions = db_utils.get_admin_questions())
+    print('clicked_survey[0] = ', clicked_survey[0])
+    return render_template("review.html", course_name = clicked_survey, user = user_role, data = database.get_survey_data(clicked_survey[0]), cs_data = c_s_data, questions = database.get_admin_questions())
 
 @app.route("/Metrics", methods=["GET", "POST"])
 def metrics():
@@ -393,47 +404,88 @@ def metrics():
 
         global view 
         global different
+        global data_list
         different = []
+        question_options = []
+        data_list = []
 
         if request.form["input"] == "1":
             return redirect(url_for("dashboard"))
 
         elif request.form["input"] == "2":
             a = request.form["active"]
-            view = db_utils.survey_results(a)
+            print('a=',a)
+            view = database.survey_results(a)
             
             for v in view:
                 if v[0] not in different:
                     different.append(v[0])
 
-            #print('diff = ', different)
+            print('diff = ', different)
+            data_list = database.query_question(different)
 
             return redirect(url_for("metrics2"))
 
         elif request.form["input"] == "3":
             c = request.form["closed"]
-            view = db_utils.survey_results(c)
+            print('c=',c)
+            view = database.survey_results(c)
+            print('view=',view)
 
             for v in view:
                 if v[0] not in different:
                     different.append(v[0])
 
-            #print('diff = ', different)
+            print('diff = ', different)
+
+            data_list = database.query_question(different)
 
             return redirect(url_for("metrics2"))
 
 
 
-    return render_template("metrics.html", results = db_utils.get_enrolment_surveys(user_id, 'admin'))
+    return render_template("metrics.html", active = database.get_survey_of_status('active'), closed = database.get_survey_of_status('closed'))
 
 @app.route("/Metrics2", methods=["GET", "POST"])
 def metrics2():
 
-    print('metrics2 view = ',view)
 
     if request.method == "POST":
 
         if request.form["input"] == "1":
             return redirect(url_for("metrics"))
 
-    return render_template("metrics2.html", results = view, diff = different)
+    #diff =  ['Test2?', 'Test3?', 'Test5?', 'Test6?']
+    #view= [['Test2?', 'a'], ['Test3?', 'a'], ['Test5?', '1'], ['Test6?', 'a'], ['Test2?', '3'], ['Test3?', 'c'], ['Test5?', '3'], ['Test6?', 'c'], ['Test2?', '2'], ['Test3?', 'b'], ['Test5?', '2'], ['Test6?', 'b']]
+    #data_list = [['Test2?', 'Text', None], ['Test3?', 'Multiple Choice', 'a,b,c'], ['Test5?', 'Multiple Choice', '1,2,3,4,5'], ['Test6?', 'Multiple Choice', 'a,b,c,d']]
+    
+    global results
+    results = []
+    tab = []
+    t = []
+
+    for d in different:
+        question = []
+
+        for v in view:
+            if v[0] == d:
+                question.append(v[1])
+
+        tab.append(question)
+
+    index = 0;
+    for i in tab:
+        results = []
+        j = Counter(i)
+        for key, value in j.items() :
+            print('k,v = ', key, value)
+            results.append((key,value))
+        print('results = ', results)
+        t.append(results)
+        index += 1
+
+    print(t)
+
+                
+
+    return render_template("metrics2.html", diff = different, data = data_list, results = t)

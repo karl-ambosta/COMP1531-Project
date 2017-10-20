@@ -13,50 +13,20 @@
 
         <h1>Metrics</h1>
 
+        {% for d in diff %}
+            <b>Question : {{ d }}</b> <br>
+                {% for i in data %}
+                    {% if i[0] == d %}
+                    <em> Question Type: {{ i[1] }}</em> <br>
+                    {% endif %}
+                {% endfor %}
 
-{% for d in diff %}
-    <b>Question: {{ d }}</b>
-    <br>
-
-    {% for r in results %}
-
-        {% if r[0] == d %}
-            {% if r[1] == 'Multiple Choice' %}
-            <table style="width:100%">
-                <tr>
-                    {% for s in r[2] %}
-                        <td><b>{{ s }}</b></td>
-                    {% endfor %}
-                </tr>
-                <tr>
-                    {% for t in r[3] %}
-                        <td>Chosen by {{ t }} time(s)</td>
-                    {% endfor %}
-                </tr>
-            </table>
-
+            {% for r in results[loop.index0] %}
+                <i>{{ r[0] }}</i> : {{ r[1] }} <br>
+            {% endfor %}
             <br>
-            {% endif %}
-
-        {% endif %}
-    {% endfor %}
-    <ul>
-    {% for w in results %}
-        {% if w[0] == d %}
-            {% if w[1] == 'Text' %}
-                {% if w[2][0] != 'Answer' %}
-                    <li>{{ w[2][0] }}</li>
-                {% endif %}
-                
-            {% endif %}
-        {% endif %}
-    {% endfor %}
-    </ul>
-    <br>
-{% endfor %}
-</table>
-    
-
+        {% endfor %}
+        <br>
 
     </body>
 </html>

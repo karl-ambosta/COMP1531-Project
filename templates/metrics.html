@@ -16,12 +16,9 @@
 
             <select name="active">
                 <option value="defaulto">Select Active Survey</option>
-                    {% for r in results %}
-                        {% if r[2] == 'active' %}
-                            <option value="{{ r[0] }}_{{ r[1] }}">{{ r[0] }} {{ r[1] }}</option>
-
-                {% endif %}
-            {% endfor %}
+                    {% for a in active %}
+                            <option value="{{ a[0] }}_{{ a[1] }}">{{ a[0] }} {{ a[1] }}</option>
+                    {% endfor %}
             </select>
             <button type="submit" name="input" value="2">View Active Survey Results</button>
 
@@ -30,12 +27,9 @@
 
             <select name="closed">
                 <option value="defaulto">Select Closed Survey</option>
-                    {% for r in results %}
-                        {% if r[2] == 'closed' %}
-                            <option value="{{ r[0] }}_{{ r[1] }}">{{ r[0] }} {{ r[1] }}</option>
-
-                {% endif %}
-            {% endfor %}
+                    {% for c in closed %}
+                            <option value="{{ c[0] }}_{{ c[1] }}">{{ c[0] }} {{ c[1] }}</option>
+                    {% endfor %}
             </select>
             <button type="submit" name="input" value="3">View Closed Survey Results</button>
 

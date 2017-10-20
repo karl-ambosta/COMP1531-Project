@@ -95,7 +95,14 @@
             {% for q in questions %}
                 <b>{{ q[0] }}</b> <br>
                 Response Type: {{q[1]}} <br>
-                {{ q[2]}} Question
+                {{ q[2]}} Question <br>
+                    {% if q[1] == 'Multiple Choice' %}
+                        Response Options: 
+                        {% for r in q[3] %}
+                                {{ r }}    
+                        {% endfor %}
+                        <br>
+                    {% endif %}
                 <hr>
             {% endfor %}
 

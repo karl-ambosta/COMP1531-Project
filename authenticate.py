@@ -79,7 +79,7 @@ def fill_database():
         print(row[0], row[1], row[2])
 
         string = """INSERT OR IGNORE INTO enrolments (id, course, offering, status)
-        VALUES ("{i}", "{c}", "{o}", "None")"""
+        VALUES ("{i}", "{c}", "{o}", 'None')"""
 
         query = string.format(i=row[0], c=row[1], o=row[2])
         print(query)
@@ -97,7 +97,7 @@ def authenticate(user_id, password):
 
     #query = "SELECT pw, role from passwords where id = ?", user_id
     #result = cursorObj.execute(query)
-    for result in cursorObj.execute( "SELECT password, role from passwords where id = ?", (user_id,) ):
+    for result in cursorObj.execute( "SELECT password, role from user where zid = ?", (user_id,) ):
         print(result)
 
     connection.commit()

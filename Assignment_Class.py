@@ -12,7 +12,7 @@ Base = declarative_base()
 # Define attributes in each class to correspond to columns in table
 
 # Passwords Table
-class User(Base):
+class Users(Base):
 
 	__tablename__ = 'user'
 	zid = Column(Integer, primary_key=True)
@@ -34,7 +34,7 @@ class Enrolments(Base):
 	__tablename__ = 'enrolments'
 	id = Column(Integer, primary_key=True)
 	user_id = Column(Integer, ForeignKey('user.zid'))
-	user = relationship(User)
+	user = relationship(Users)
 	course_name = Column(String)
 	course_offering = Column(String)
 	status = Column(String)
@@ -81,6 +81,36 @@ class Database(object):
 		self.DBSession = sessionmaker(bind=self.engine)
 
 #####################################################################################################################################################
+	# 
+	def populate_table(self):
+		session = self.DBSession()
+
+		# Add courses details in the database	
+		with open('courses.csv','r') as csv_in:
+			reader = csv.reader(csv_in)
+			for row in reader:
+				course = Courses(name = row[0], offering = row[1], status = 'None')
+				self.add_row(session, course)
+
+		# Add staff/student enrolments in the database	
+		with open('enrolments.csv','r') as csv_in:
+			reader = csv.reader(csv_in)
+			for row in reader:
+				enrols = Enrolments(user_id = row[0], course_name = row[1], course_offering = row[2])
+				self.add_row(session, enrols)
+
+		# Add admin credentials in the database
+		user = Users(zid = '0', password = 'admin', role = 'admin')
+		self.add_row(session, user)
+
+		# Add staff/student in the database	
+		with open('passwords.csv','r') as csv_in:
+			reader = csv.reader(csv_in)
+			for row in reader:
+				user = Users(zid = row[0], password = row[1], role = row[2])
+				self.add_row(session, user)
+
+#####################################################################################################################################################
 	# Add data to table
 	def add_row(self, session, row):
 		session.add(row)
@@ -88,46 +118,52 @@ class Database(object):
 		session.close()
 
 #####################################################################################################################################################
-	# Delete data from table
+	"""# Delete data from table
 	def delete_row(self, session, row):
 		try:
 			session.delete(row)
-		except:
-			pass
+		except Exception as e:
+			print(e)
 		session.commit()
-		session.close()
+		session.close() """
 
 #####################################################################################################################################################
 	# Get question corresponding to specific question name
 	def query_question(self, name):
 		session = self.DBSession()
-		question = session.query(Questions).filter(Questions.name == name).one()
-		session.close()
-		return item
+		data_list = []
+		print('name = ', name)
+		for q in name:
+			for question in session.query(Questions).filter(Questions.name == q):
+				data_list.append([question.name,question.types,question.responses])
+		return data_list
 
 #####################################################################################################################################################
 	# Get user corressponding to specific user_id
 	def query_user(self, user_id):
 		session = self.DBSession()
-		user = session.query(User).filter(User.id == user_id).one()
+		user = session.query(Users).filter(Users.zid == user_id).first()
 		session.close()
-		if user is not None:
-			return user
+		if user.zid is not None:
+			return user.zid
 		else: return None
 
 #####################################################################################################################################################
 	# Adding question to question pool
 	def add_question(self, name, types, option, responses):
 		session = self.DBSession()
+		print('adding =>', name, types, option, responses)
 		question = Questions(name = name, types = types, option = option, responses = responses)
 		self.add_row(session, question)
 
 #####################################################################################################################################################
 	# Deleting question from question pool
-	def delete_question(self, name, types, option, responses):
+	def delete_question(self, name):
 		session = self.DBSession()
-		question = Questions(name = name, types = types, option = option, responses = responses)
-		self.delete_row(session, question)
+		delete_q = session.query(Questions).filter(Questions.name == name).first()
+		print('deleting =>', delete_q.name, delete_q.types, delete_q.option, delete_q.responses)
+		session.delete(delete_q)
+		session.commit()
 
 #####################################################################################################################################################
 	# Gather all question for admin ONLY
@@ -135,7 +171,7 @@ class Database(object):
 		questions = []
 		session = self.DBSession()
 		for q in session.query(Questions).all():
-			questions.append(q)
+			questions.append([q.name, q.types, q.option, q.responses])
 
 		return questions
 
@@ -161,31 +197,35 @@ class Database(object):
 		# If the user is an admin, gather all surveys
 		if role == 'admin':
 			for s in session.query(Courses).all():
-				if s not in enrol_survey_status:
-					enrol_survey_status.append(s)
+				if (s.name,s.offering) not in enrol_survey_status:
+					enrol_survey_status.append((s.name,s.offering))
+			
+			print(enrol_survey_status)
+			return enrol_survey_status
 
 		# Gather staff/student enrolments and append to user_enrolments
 		for u in session.query(Enrolments).filter(Enrolments.user_id == user):
-			if (u[1],u[2]) not in user_enrolments:
-				us = u[1],u[2]
+			if (u.course_name,u.course_offering) not in user_enrolments:
+				us = u.course_name,u.course_offering
 				user_enrolments.append(us)
 
 		# From the staff's enrolments, check for enrolled course surveys
 		if role == 'staff':
 			for w in session.query(Courses).filter(Courses.name == user_enrolments[0][0]).filter(Courses.offering == user_enrolments[0][1]):
-				if (w[0],w[1]) not in read_enrols:
-					ws = w[0],w[1]
+				if (w.name,w.offering) not in read_enrols:
+					ws = w.name,w.offering
 					read_enrols.append(ws)
-					enrol_survey_status.append(w)
+					enrol_survey_status.append((w.name,w.offering,w.status))
 
 		# From the student's enrolments, check for enrolled course surveys
 		if role == 'student':
 			for user in user_enrolments:
 				for v in session.query(Courses).filter(Courses.name == user[0]).filter(Courses.offering == user[1]):
-					if (v[0],v[1]) not in read_enrols:
-						read_enrols.append((v[0],v[1]))
-						enrol_survey_status(v)
+					if (v.name,v.offering) not in read_enrols:
+						read_enrols.append((v.name,v.offering))
+						enrol_survey_status.append((v.name,v.offering,v.status))
 
+		print(enrol_survey_status)
 		return enrol_survey_status
 
 #####################################################################################################################################################
@@ -195,31 +235,34 @@ class Database(object):
 		session = self.DBSession()
 
 		for c in session.query(Courses).all():
-			if c[1] not in offerings:
-				offerings.append(c[1])
+			if c.offering not in offerings:
+				offerings.append(c.offering)
 
 		return offerings
 
 #####################################################################################################################################################
 	# Create a course survey, add the selected questions to Surveys and change it's status in Courses to 'review'
-	def create_survey(self, name, offering, questions):
+	def create_survey(self, course_title, questions):
 		session = self.DBSession()
+		
+		session.query(Courses).filter(Courses.name == course_title[0]).filter(Courses.offering ==  course_title[1]).update(values = {Courses.status:'review'})
 
-		session.query(Courses).filter(Courses.name == name).filter(Courses.offering ==  offering).update(values = {Course.status:'review'})
-
+		print('questions = ', questions)
 		for q in questions:
-			survey = Surveys(course_name = name, offering = offering, question_name = q[0])
+			survey = Surveys(name = course_title[0], offering = course_title[1], question_name = q)
 			self.add_row(session, survey)
+
+		session.commit()
 
 #####################################################################################################################################################
 	# Check the status of a named survey
-	def check_survey_status(self, name, offering):
+	def check_survey_status(self, course_title):
 		session = self.DBSession()
 
 		# Check the status of course survey
-		status = session.query(Courses).filter(Courses.name == name).filter(Courses.offering == offering).one()
+		course = session.query(Courses).filter(Courses.name == course_title[0]).filter(Courses.offering == course_title[1]).first()
 
-		return status[0][2]
+		return course.status
 
 #####################################################################################################################################################
 	# For each course that the student is enrolled in, this function collects the surveys of a
@@ -229,21 +272,22 @@ class Database(object):
 		surveys = []
 
 		for s in session.query(Courses).filter(Courses.name == course_name).filter(Courses.offering == offering).filter(Courses.status == status).all():
-			st.append(s)
+			st.append([s.name,s.offering])
 
 		return st
 
 #####################################################################################################################################################
-   	# Get the enrolments of the student user
-	def get_student_enrolments(self, user_id):
+   	# Get the enrolments of the user
+	def get_user_enrolments(self, zid):
 		enrolled = []
 		already_read = []
 		session = self.DBSession()
 
-		for e in session.query(Enrolments).filter(Enrolments.id == user_id).all():
-			if (e[1],e[2]) not in already_in:
-				already_in.append((e[1],e[2]))
-				enrolled.append(e)
+		print('user_id = ', zid)
+		for e in session.query(Enrolments).filter(Enrolments.user_id == zid).all():
+			if (e.course_name,e.course_offering) not in already_read:
+				already_read.append((e.course_name,e.course_offering))
+				enrolled.append((e.course_name,e.course_offering,e.status))
 
 		return enrolled
 
@@ -254,112 +298,106 @@ class Database(object):
 		session = self.DBSession()
 
 		for s in session.query(Courses).filter(Courses.status == status).all():
-			st.append(s)
+			if [s.name, s.offering] not in st:
+				st.append([s.name, s.offering])
 
+		print('st = ', st)
 		return st
 
 #####################################################################################################################################################
 	# Gather a list of the questions associated with the named survey, compare it to the questions in the Questions table and get question data
-	def get_survey_data(self, course_name, course_offering):
+	def get_survey_data(self, course_title):
 		survey_questions = []
 		questions_list = []
 		text_questions = []
 		session = self.DBSession()
+		course = course_title.split('_')
 
-		for s in session.query(Surveys).filter(Survey.name == course_name).filter(Survey.offering == course_offering):
-			survey_questions.append(s[3])
+		for s in session.query(Surveys).filter(Surveys.name == course[0]).filter(Surveys.offering == course[1]):
+			survey_questions.append(s.question_name)
+
+		print(survey_questions)
 
 		for quest in survey_questions:
 			element = session.query(Questions).filter(Questions.name == quest).one()
-			questions_list.append(element)
+			questions_list.append([element.name,element.types,element.responses])
 
+		print(questions_list)
 		return questions_list
 
 #####################################################################################################################################################
 	# Add questions to course survey
-	def add_to_survey(self, survey_name, survey_offering, question):
+	def add_to_survey(self, survey_title, question):
 		session = self.DBSession()
+		survey = survey_title.split('_')
 
-		add = Surveys(name = survey_name, offering = survey_offering, question_name = question)
+		add = Surveys(name = survey[0], offering = survey[1], question_name = question)
 		self.add_row(session, add)
 
 #####################################################################################################################################################
 	# Change the status of course survey to 'active' in Courses and 'incomplete' in Enrolments 
 	def release_survey(self, course_name):
 		session = self.DBSession()
-		session.query(Courses).filter(Courses.name == course_name[0]).filter(Courses.offering ==  course_name[1]).update(values = {Course.status:'active'})
+		session.query(Courses).filter(Courses.name == course_name[0]).filter(Courses.offering ==  course_name[1]).update(values = {Courses.status:'active'})
 		session.query(Enrolments).filter(Enrolments.course_name == course_name[0]).filter(Enrolments.course_offering == course_name[1]).update(values = {Enrolments.status:'incomplete'})
+		session.commit()
 
 #####################################################################################################################################################
 	# Change the status of course survey to 'closed' 
 	def close_survey(self, course_name):
 		session = self.DBSession()
-		session.query(Courses).filter(Courses.name == course_name[0]).filter(Courses.offering ==  course_name[1]).update(values = {Course.status:'closed'})
+		session.query(Courses).filter(Courses.name == course_name[0]).filter(Courses.offering ==  course_name[1]).update(values = {Courses.status:'closed'})
+		session.commit()
 
 #####################################################################################################################################################
 	# Submit responses to particular course survey and changes the status of the named survey in Enrolments to 'complete'
-	def submit_survey(self, user_id, course_name, course_offering, submitted_responses):
+	def submit_survey(self, user_id, course_title, submitted_responses):
 		session = self.DBSession()
+		course = course_title.split('_')
 		
 		# Change the status of the student's enrolment survey to complete to show that the student has completed the survey
 		# And acts as an indicator so that they cannot resubmit the survey
-		session.query(Enrolments).filter(Enrolments.user_id == user_id).filter(Enrolments.course_name == course_name).filter(Enrolments.course_offering == course_offering).update(values = {Enrolments.status:'complete'})
+		session.query(Enrolments).filter(Enrolments.user_id == user_id).filter(Enrolments.course_name == course[0]).filter(Enrolments.course_offering == course[1]).update(values = {Enrolments.status:'complete'})
 
 		for s in submitted_responses:
-			submit = Responses(course_name = course_name, offering = course_offering, question = s[0], response = s[1])
+			submit = Responses(course_name = course[0], offering = course[1], question = s[0], response = s[1][0])
 			self.add_row(session, submit)
+
+		session.commit()
 
 #####################################################################################################################################################
 	# Gather survey results to display in metrics
-	def survey_results(self, course_name, course_offering):
+	def survey_results(self, course_name):
 		results = []
 		session = self.DBSession()
-		for res in session.query(Responses).filter(Responses.course_name == course_name).filter(Responses.offering == course_offering):
-			results.append(res)
+		course = course_name.split('_')
+		print(course)
+		for res in session.query(Responses).filter(Responses.course_name == course[0]).filter(Responses.offering == course[1]):
+			print(res.question,res.response)
+			results.append([res.question,res.response])
 
 		return results
 
 #####################################################################################################################################################
 
-	def populate_table(self):
-		session = self.DBSession()
-
-		with open('courses.csv','r') as csv_in:
-			reader = csv.reader(csv_in)
-			for row in reader:
-				course = Courses(name = row[0], offering = row[1], status = 'None')
-				self.add_row(session, course)
-
-		with open('enrolments.csv','r') as csv_in:
-			reader = csv.reader(csv_in)
-			for row in reader:
-				enrols = Enrolments(user_id = row[0], course_name = row[1], course_offering = row[2])
-				self.add_row(session, enrols)
-
-		with open('passwords.csv','r') as csv_in:
-			reader = csv.reader(csv_in)
-			for row in reader:
-				user = User(zid = row[0], password = row[1], role = row[2])
-				self.add_row(session, user)
-
-#####################################################################################################################################################
 
 
+'''
+database = Database()
+try:
+	database.populate_table()
+except:
+	pass
+database.submit_survey('100', 'COMP9333', '17s2', [('What is your name?', 'Karl Ambosta'), ('What is your age?', '19')])
+try:
+	i = database.survey_results('COMP9333', '17s2')
+	for e in i:
+		print(e.course_name, e.offering, e.question, e.response)
 
-# database = Database()
-# try:
-#	database.populate_table()
-#except:
-#	pass
-#database.submit_survey('100', 'COMP9333', '17s2', [('What is your name?', 'Karl'), ('What is your course?', 'Comp1531')])
-#try:
-#	i = database.survey_results('COMP9333', '17s2')
-#	for e in i:
-#		print(e.course_name, e.offering, e.question, e.response)
+except Exception as e:
+	print(e)
 
-#except Exception as e:
-#	print(e)
-
-#for q in database.get_admin_questions():
-#		print(q.name, q.types, q.option, q.responses)
+for q in database.get_admin_questions():
+		print(q.name, q.types, q.option, q.responses)
+'''
 

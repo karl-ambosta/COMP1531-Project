@@ -22,7 +22,9 @@
 
                         {% if d[1] == 'Multiple Choice' %}
                             {% for e in d[2] %}
-                            <input type="radio" name="{{d[0]}}" value="{{ e }}">{{ e }}<br>
+                                {% if e != ',' %}
+                                    <input type="radio" name="{{d[0]}}" value="{{ e }}">{{ e }}<br>
+                                {% endif %}
                             {% endfor %}
 
                         {% elif d[1] == 'Text' %}
