@@ -16,7 +16,7 @@
 
         {% for u in user_enrols %}
             {% if u[2] == 'review' %}
-        	<button type="submit" name="input" value="{{u[0]}}_{{u[1]}}">{{u[0]}} {{u[1]}}</button>
+        	<button type="submit" name="input" value="{{u[0]}}_{{u[1]}}_1">{{u[0]}} {{u[1]}}</button>
             {% endif %}
         {% endfor %}
 
@@ -26,6 +26,13 @@
 		{% for u in user_enrols %}
             {% if u[2] == 'active' %}
             {{u[0]}} {{u[1]}}
+            {% endif %}
+        {% endfor %}
+
+        <h3>Closed Surveys:</h3>
+        {% for u in user_enrols %}
+            {% if u[2] == 'closed' %}
+                <button type="submit" name="input" value="{{u[0]}}_{{u[1]}}_2" >{{u[0]}} {{u[1]}}</button> - View Survey Results
             {% endif %}
         {% endfor %}
 

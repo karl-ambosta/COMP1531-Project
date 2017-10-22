@@ -302,25 +302,84 @@ def survey():
 @login_required
 def staff_dash():
 
+    global different
+    different = []
+    tab = []
+    global total_responses_per_question
+    total_responses_per_question = []
+    global t
+    t = []
+    global data_list
+    global display
+
     if request.method == "POST":
         if request.form["input"] == "1":
             return redirect(url_for("logout"))
 
         else:
-            clicked_survey[:] = []                              # resetting list
-            c_s = request.form["input"]
-            clicked_survey.append(request.form["input"])
-            database.get_survey_data(c_s)                       # gets data from selected course
-            user_role[:] = []
-            user_role.append('staff')
+            s = request.form["input"].split('_')
+            
+            if s[2] == '1':
+                clicked_survey[:] = []                              # resetting list
+                s.remove('1')
+                string = '_'.join(s)
+                clicked_survey.append(string)
+                database.get_survey_data(s)                       # gets data from selected course
+                user_role[:] = []
+                user_role.append('staff')
 
-            # getting name of question
-            c_s_data[:] = []
-            for c in database.get_survey_data(c_s):
-                if c[0] not in c_s_data:
-                    c_s_data.append(c[0])
+                # getting name of question
+                c_s_data[:] = []
+                for c in database.get_survey_data(s):
+                    if c[0] not in c_s_data:
+                        c_s_data.append(c[0])
 
-            return redirect(url_for("review"))
+                return redirect(url_for("review"))
+            else:
+                s.remove('2')
+                string = '_'.join(s)
+                print('string = ', string)
+                view = database.survey_results(string)
+
+                for v in view:
+                    if v[0] not in different:
+                        different.append(v[0])
+
+                print('diff = ', different)
+                data_list = database.query_question(different)
+
+                for d in different:
+                    question = []
+
+                    for v in view:
+                        if v[0] == d:
+                            question.append(v[1])
+                            print('question = ', question)
+
+                    tab.append(question)
+
+                print('tab = ', tab)
+
+                index = 0;
+                for i in tab:
+                    total_responses_per_question.append(len(i))
+                    results = []
+                    j = Counter(i)
+                    for key, value in j.items() :
+                        print('k,v = ', key, value)
+                        results.append((key,value))
+                    print('results = ', results)
+                    t.append(results)
+                    index += 1
+
+                print('total_responses_per_question = ', total_responses_per_question)
+                print(t)
+
+                display = request.form["input"].split('_')
+                display.remove('2')
+
+                return redirect(url_for("closed_metrics"))
+            
 
     return render_template("staff_dash.html", user = user_id, user_enrols = database.get_enrolment_surveys(user_id, 'staff'))
 
@@ -328,24 +387,83 @@ def staff_dash():
 @login_required
 def student_dash():
 
+    global different
+    different = []
+    tab = []
+    global total_responses_per_question
+    total_responses_per_question = []
+    global t
+    t = []
+    global data_list
+    global display
+
     if request.method == "POST":
         if request.form["input"] == "1":
             return redirect(url_for("logout"))
 
         else:
-            clicked_survey[:] = []
-            c_s = request.form["input"]
-            clicked_survey.append(c_s)
-            database.get_survey_data(c_s)
-            user_role[:] = []
-            user_role.append('student')
+            s = request.form["input"].split('_')
+            
+            if s[2] == '1':
+                clicked_survey[:] = []                              # resetting list
+                s.remove('1')
+                string = '_'.join(s)
+                clicked_survey.append(string)
+                database.get_survey_data(s)                       # gets data from selected course
+                user_role[:] = []
+                user_role.append('staff')
 
-            c_s_data[:] = []
-            for c in database.get_survey_data(c_s):
-                if c[0] not in c_s_data:
-                    c_s_data.append(c[0])
+                # getting name of question
+                c_s_data[:] = []
+                for c in database.get_survey_data(s):
+                    if c[0] not in c_s_data:
+                        c_s_data.append(c[0])
 
-            return redirect(url_for("survey"))
+                return redirect(url_for("survey"))
+            else:
+                s.remove('2')
+                string = '_'.join(s)
+                print('string = ', string)
+                view = database.survey_results(string)
+
+                for v in view:
+                    if v[0] not in different:
+                        different.append(v[0])
+
+                print('diff = ', different)
+                data_list = database.query_question(different)
+
+                for d in different:
+                    question = []
+
+                    for v in view:
+                        if v[0] == d:
+                            question.append(v[1])
+                            print('question = ', question)
+
+                    tab.append(question)
+
+                print('tab = ', tab)
+
+                index = 0;
+                for i in tab:
+                    total_responses_per_question.append(len(i))
+                    results = []
+                    j = Counter(i)
+                    for key, value in j.items() :
+                        print('k,v = ', key, value)
+                        results.append((key,value))
+                    print('results = ', results)
+                    t.append(results)
+                    index += 1
+
+                print('total_responses_per_question = ', total_responses_per_question)
+                print(t)
+
+                display = request.form["input"].split('_')
+                display.remove('2')
+
+                return redirect(url_for("closed_metrics"))
 
     return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = database.get_enrolment_surveys(user_id, 'student'), enrols = database.get_user_enrolments(user_id))
 
@@ -389,12 +507,22 @@ def review():
             return redirect(url_for("staff_dash"))
 
         else:
-            add_q = request.form["input"]
-            c_s_data.append(add_q)
-            database.add_to_survey(clicked_survey[0],add_q)
-            return redirect(url_for("review"))
+            question = request.form["input"].split('_')
+            if question[1] == 'add':
+                c_s_data.append(question[0])
+                database.add_to_survey(clicked_survey[0],question[0])
+                return redirect(url_for("review"))
+            
+            else:
+                print('delete question => ', question[0])
+                database.delete_from_survey(clicked_survey[0],question[0])
+                c_s_data.remove(question[0])
+
+            
+            
 
     print('clicked_survey[0] = ', clicked_survey[0])
+    print('data = ',database.get_survey_data(clicked_survey[0]))
     return render_template("review.html", course_name = clicked_survey, user = user_role, data = database.get_survey_data(clicked_survey[0]), cs_data = c_s_data, questions = database.get_admin_questions())
 
 @app.route("/Metrics", methods=["GET", "POST"])
@@ -408,14 +536,15 @@ def metrics():
         different = []
         question_options = []
         data_list = []
+        global display_results
 
         if request.form["input"] == "1":
             return redirect(url_for("dashboard"))
 
         elif request.form["input"] == "2":
-            a = request.form["active"]
-            print('a=',a)
-            view = database.survey_results(a)
+            display_results = request.form["active"]
+            print('displaying results for = ',display_results)
+            view = database.survey_results(display_results)
             
             for v in view:
                 if v[0] not in different:
@@ -423,13 +552,12 @@ def metrics():
 
             print('diff = ', different)
             data_list = database.query_question(different)
-
             return redirect(url_for("metrics2"))
 
         elif request.form["input"] == "3":
-            c = request.form["closed"]
-            print('c=',c)
-            view = database.survey_results(c)
+            display_results = request.form["closed"]
+            print('displying results for = ',display_results)
+            view = database.survey_results(display_results)
             print('view=',view)
 
             for v in view:
@@ -449,20 +577,18 @@ def metrics():
 @app.route("/Metrics2", methods=["GET", "POST"])
 def metrics2():
 
-
     if request.method == "POST":
 
         if request.form["input"] == "1":
             return redirect(url_for("metrics"))
 
-    #diff =  ['Test2?', 'Test3?', 'Test5?', 'Test6?']
-    #view= [['Test2?', 'a'], ['Test3?', 'a'], ['Test5?', '1'], ['Test6?', 'a'], ['Test2?', '3'], ['Test3?', 'c'], ['Test5?', '3'], ['Test6?', 'c'], ['Test2?', '2'], ['Test3?', 'b'], ['Test5?', '2'], ['Test6?', 'b']]
-    #data_list = [['Test2?', 'Text', None], ['Test3?', 'Multiple Choice', 'a,b,c'], ['Test5?', 'Multiple Choice', '1,2,3,4,5'], ['Test6?', 'Multiple Choice', 'a,b,c,d']]
-    
     global results
     results = []
     tab = []
+    global t
     t = []
+    global total_responses_per_question
+    total_responses_per_question = []
 
     for d in different:
         question = []
@@ -470,11 +596,15 @@ def metrics2():
         for v in view:
             if v[0] == d:
                 question.append(v[1])
+                print('question = ', question)
 
         tab.append(question)
 
+    print('tab = ', tab)
+
     index = 0;
     for i in tab:
+        total_responses_per_question.append(len(i))
         results = []
         j = Counter(i)
         for key, value in j.items() :
@@ -484,8 +614,12 @@ def metrics2():
         t.append(results)
         index += 1
 
+    print('total_responses_per_question = ', total_responses_per_question)
     print(t)
 
-                
+    return render_template("metrics2.html", name = display_results, diff = different, data = data_list, results = t, length = len(different), total = total_responses_per_question)
+   
+@app.route("/closed_metrics", methods=["GET", "POST"])
+def closed_metrics():
 
-    return render_template("metrics2.html", diff = different, data = data_list, results = t)
+    return render_template("closed_metrics.html", name = display, diff = different, data = data_list, results = t, length = len(different), total = total_responses_per_question)

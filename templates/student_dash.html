@@ -19,17 +19,17 @@
                         {% if a[0] == s[0] %}
                             {% if a[1] == s[1] %}
                                 {% if a[2] != 'complete' %}
-                                    <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}">{{s[0]}} {{s[1]}}</button> - OPEN <br>
+                                    <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}_1">{{s[0]}} {{s[1]}}</button> - Open Survey <br><br>
                                 {% else %}
-                                    <b>{{ s[0] }} {{ s[1] }}</b> - COMPLETED<br> 
+                                    <b>{{ s[0] }} {{ s[1] }}</b> - Completed <br> <br>
                                 {% endif %}
                             {% endif %}
                         {% endif %}
                     {% endfor %}
                 {% elif s[2] == 'closed' %}
-                    <b>{{ s[0] }} {{ s[1] }}</b> - CLOSED<br> 
+                    <button type="submit" name="input" value="{{ s[0] }}_{{ s[1] }}_2">{{ s[0] }} {{ s[1] }}</button></b> - Closed - View Survey Results<br> <br>
                 {% else %}
-                    <b>{{ s[0] }} {{ s[1] }}</b> - NOT RELEASE/CREATED<br> 
+                    <b>{{ s[0] }} {{ s[1] }}</b> - Not Released/Created Yet<br> <br>
                 {% endif %}
             {% endfor %}
         <br>

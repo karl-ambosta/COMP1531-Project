@@ -12,14 +12,13 @@
     <body>
 
     	<Form method="POST">
-            <button type="submit" name="input" value="1">Back</button>
+            <button onclick="goBack()">Back</button>
             <br>
         </Form>
 
         <h1>Metrics</h1>
-            
-            {% set list1 = name.split('_') %}
-                <h4>{{ total[0] }} completed survey(s) for <em>{{ list1[0] }} {{ list1[1] }}</em></h4>
+
+            <h4>{{ total[0] }} completed survey(s) for <em>{{ name[0] }} {{ name[1] }}</em></h4>
 
         {% for d in diff %}
             <b>Question : {{ d }}</b> <br>
@@ -60,7 +59,12 @@
 
 </style>
 
+<script>
+function goBack() {
+    window.history.back();
+}
+</script>
+
 
     </body>
 </html>
-

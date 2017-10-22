@@ -57,6 +57,7 @@ class Surveys(Base):
 	name = Column(String)
 	offering = Column(String)
 	question_name = Column(String)
+	added_by = Column(String, nullable=False)
 
 class Responses(Base):
 
@@ -249,7 +250,7 @@ class Database(object):
 
 		print('questions = ', questions)
 		for q in questions:
-			survey = Surveys(name = course_title[0], offering = course_title[1], question_name = q)
+			survey = Surveys(name = course_title[0], offering = course_title[1], question_name = q, added_by = 'admin')
 			self.add_row(session, survey)
 
 		session.commit()
@@ -311,16 +312,19 @@ class Database(object):
 		questions_list = []
 		text_questions = []
 		session = self.DBSession()
-		course = course_title.split('_')
+		try:
+			course = course_title.split('_')
+		except:
+			course = course_title
 
 		for s in session.query(Surveys).filter(Surveys.name == course[0]).filter(Surveys.offering == course[1]):
-			survey_questions.append(s.question_name)
+			survey_questions.append((s.question_name,s.added_by))
 
 		print(survey_questions)
 
 		for quest in survey_questions:
-			element = session.query(Questions).filter(Questions.name == quest).one()
-			questions_list.append([element.name,element.types,element.responses])
+			element = session.query(Questions).filter(Questions.name == quest[0]).one()
+			questions_list.append([element.name,element.types,element.responses,quest[1]])
 
 		print(questions_list)
 		return questions_list
@@ -331,9 +335,19 @@ class Database(object):
 		session = self.DBSession()
 		survey = survey_title.split('_')
 
-		add = Surveys(name = survey[0], offering = survey[1], question_name = question)
+		add = Surveys(name = survey[0], offering = survey[1], question_name = question, added_by = 'staff')
 		self.add_row(session, add)
 
+#####################################################################################################################################################
+	# Add questions to course survey
+	def delete_from_survey(self, survey_title, question):
+		session = self.DBSession()
+		survey = survey_title.split('_')
+
+		delete = session.query(Surveys).filter(Surveys.name == survey[0]).filter(Surveys.offering == survey[1]).filter(Surveys.question_name == question).first()
+		print('deleting =>', delete.name, delete.offering, delete.question_name, 'which was added by:', delete.added_by)
+		session.delete(delete)
+		session.commit()
 #####################################################################################################################################################
 	# Change the status of course survey to 'active' in Courses and 'incomplete' in Enrolments 
 	def release_survey(self, course_name):
@@ -359,8 +373,14 @@ class Database(object):
 		# And acts as an indicator so that they cannot resubmit the survey
 		session.query(Enrolments).filter(Enrolments.user_id == user_id).filter(Enrolments.course_name == course[0]).filter(Enrolments.course_offering == course[1]).update(values = {Enrolments.status:'complete'})
 
+
 		for s in submitted_responses:
-			submit = Responses(course_name = course[0], offering = course[1], question = s[0], response = s[1][0])
+			q = session.query(Questions).filter(Questions.name== s[0]).first()
+			if q.types == 'Multiple Choice':
+				submit = Responses(course_name = course[0], offering = course[1], question = s[0], response = s[1][0])
+			else :
+				submit = Responses(course_name = course[0], offering = course[1], question = s[0], response = s[1])
+			
 			self.add_row(session, submit)
 
 		session.commit()

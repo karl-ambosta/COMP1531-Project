@@ -11,6 +11,14 @@
             {% for cs in cs_data %}
 
                 <b>{{ cs }}</b>
+                    {% for dat in data %}
+                        {% if dat[0] == cs %}
+                            {% if dat[3] == 'staff' %}
+                                <button type="submit" name="input" value="{{ cs }}_delete">Delete Question</button>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
                 <br>
 
                 {% for d in data %}
@@ -18,11 +26,11 @@
                     {% if d[0] == cs %}
 
                         {% if d[1] == 'Multiple Choice' %}
-                            {% for e in d[2] %}
-                                {% if e != ',' %}
-                                    <input type="radio" name="radio" value="{{ e }}" disabled>{{ e }}<br>
-                                {% endif %}
-                            {% endfor %}
+
+                            {% set list1 = d[2].split(',') %}
+                                {% for l in list1 %}
+                                    <input type="radio" name="radio" value="{{ l }}" disabled>{{ l }}<br>
+                                {% endfor %}
 
                         {% elif d[1] == 'Text' %}
                          <input type="text" name="answer" disabled>
@@ -44,7 +52,7 @@
                     {% if q[2] == 'Optional' %}
                 	   <b>{{ q[0] }}</b> <br>
                        Response Type: {{q[1]}}
-                	   <button type="submit" name="input" value="{{q[0]}}">Add</button>
+                	   <button type="submit" name="input" value="{{q[0]}}_add">Add</button>
                 	   <hr>
                     {% endif %}
                 {% endif %}

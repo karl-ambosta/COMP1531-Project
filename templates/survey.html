@@ -21,11 +21,11 @@
                     {% if d[0] == cs %}
 
                         {% if d[1] == 'Multiple Choice' %}
-                            {% for e in d[2] %}
-                                {% if e != ',' %}
-                                    <input type="radio" name="{{d[0]}}" value="{{ e }}">{{ e }}<br>
-                                {% endif %}
-                            {% endfor %}
+                            
+                            {% set list1 = d[2].split(',') %}
+                                {% for l in list1 %}
+                                    <input type="radio" name="{{ d[0] }}" value="{{ l }}">{{ l }}<br>
+                                {% endfor %}
 
                         {% elif d[1] == 'Text' %}
                          <input type="text" name="{{ d[0] }}">
