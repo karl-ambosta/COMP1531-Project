@@ -19,7 +19,11 @@
         <h1>Metrics</h1>
             
             {% set list1 = name.split('_') %}
-                <h4>{{ total[0] }} completed survey(s) for <em>{{ list1[0] }} {{ list1[1] }}</em></h4>
+                {% if total[0] %}
+                    <h4>{{ total[0] }} completed survey(s) for <em>{{ list1[0] }} {{ list1[1] }}</em></h4>
+                {% else %}
+                    <h4>0 completed survey(s) for <em>{{ list1[0] }} {{ list1[1] }}</em></h4>
+                {%endif%}
 
         {% for d in diff %}
             <b>Question : {{ d }}</b> <br>
