@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 import csv
 
 # Create a database that stores data in the local directory's data.db file
-engine = create_engine('sqlite:///survey.db.db')
+engine = create_engine('sqlite:///survey.db')
 Base = declarative_base()
 
 # Define classes for each table in the database.
