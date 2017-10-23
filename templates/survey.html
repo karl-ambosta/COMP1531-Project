@@ -6,10 +6,14 @@
     </head>
 
     <body>
-    <Form method="POST">
+    
+<Form method="POST">
+    
+    <button type="submit" name="input" value="0">Back</button>
+</Form>
 
-            <button type="submit" name="input" value="0">Back</button>
-
+            
+<Form method="POST", onsubmit="return validateForm()">
             <h1>Please complete the following survey for {{course_name[0]}}</h1>
             {% for cs in cs_data %}
 
@@ -44,5 +48,4 @@
 
         </Form>
     </body>
-
 </html>

@@ -7,6 +7,8 @@ from authenticate import *
 from database2 import *
 from Assignment_Class import *
 from collections import Counter
+from datetime import *
+from time import *
 
 admins = {}
 flag = 0
@@ -80,14 +82,12 @@ def login():
     # Fill in databases
     # Possibly set a global flag to ensure that this only happens once
     try:
-        database.create_table()
-    except:
-        pass
-
-    try:
         database.populate_table()
     except:
         pass
+
+    database.query_course_survey()
+
     return render_template("login.html")
 
 
@@ -142,29 +142,48 @@ def create():
                 if i.offering == offering:
                     o.append(i.name)
 
-            return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = 'offer', courseoff = '', offers = o)
+            return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = 'offer', courseoff = '', offers = o)
 
         # When the admin submits a course name
         if request.form["input"] == "3":
             courseoff = 'course'
             course_name.insert(0, request.form["course"])
 
-            return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
+            return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
 
         # When the admin submits the chosen questions
         if request.form["input"] == "4":
 
             # Check for existing survey or create new one
             if database.check_survey_status(course_name) != 'None':
-                chosen_msg = msg[4]
                 return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review')))
 
             # Check which questions were submitted
             qus = request.form.getlist('check')
-            database.create_survey(course_name,qus)
-            return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review'), msg = chosen_msg))
 
-    return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = '', offers = '')
+            chosen_date = request.form["date"]
+            current = datetime.now()
+            current.strftime("%Y-%m-%d")
+            td = datetime.strptime(chosen_date, '%Y-%m-%d')
+            print('td = ', td)
+
+            # If closing dat chosen is before the current date, reload page
+            #if td > current == False:
+            #    return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
+
+            # if no questions were selected to create survey with, reload page
+            if qus == []:
+                print("No questions chosen")
+                return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
+            
+
+            # Else create survey
+            else:
+                database.create_survey(course_name,qus,chosen_date)
+
+            return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review')))
+
+    return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = '', offers = '')
 
 
 @app.route("/Question", methods=["GET", "POST"])
@@ -536,8 +555,6 @@ def metrics():
 
             return redirect(url_for("metrics2"))
 
-
-
     return render_template("metrics.html", active = database.get_survey_of_status('active'), closed = database.get_survey_of_status('closed'))
 
 @app.route("/Metrics2", methods=["GET", "POST"])
@@ -577,7 +594,7 @@ def metrics2():
 
     return render_template("metrics2.html", name = display_results, diff = different, data = data_list, results = t, length = len(different), total = total_responses_per_question)
    
-@app.route("/closed_metrics", methods=["GET", "POST"])
+@app.route("/Closed_Metrics", methods=["GET", "POST"])
 def closed_metrics():
 
     return render_template("closed_metrics.html", name = display, diff = different, data = data_list, results = t, length = len(different), total = total_responses_per_question)

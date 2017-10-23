@@ -30,8 +30,8 @@
         <h3>Active Surveys:</h3>
 
             {% for a in active %}
-                {{ a[0] }} {{ a[1] }} 
-                <button type="submit" name="input" value="{{a[0]}}_{{a[1]}}">Close Survey</button>
+                {{ a[0] }} {{ a[1] }} → 
+                <em>Closing Date : {{ a[2] }}<em>
                 <br>
             {% endfor %}
 
@@ -40,7 +40,9 @@
         <h3>Closed Surveys:</h3>
 
             {% for c in closed %}
-                {{ c[0] }} {{ c[1] }} <br>
+                {{ c[0] }} {{ c[1] }} → 
+                <em>Closed on : {{ c[2] }}<em>
+                <br>
             {% endfor %}
 
         <br>

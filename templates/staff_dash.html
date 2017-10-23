@@ -25,7 +25,8 @@
         <h3>Active Surveys:</h3>
 		{% for u in user_enrols %}
             {% if u[2] == 'active' %}
-            {{u[0]}} {{u[1]}}
+            {{u[0]}} {{u[1]}} → 
+                <em>Closing Date : {{ u[3] }}</em>
             {% endif %}
         {% endfor %}
 

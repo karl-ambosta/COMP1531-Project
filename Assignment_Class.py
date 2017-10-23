@@ -3,6 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 import csv
+from datetime import *
+from time import *
 
 # Create a database that stores data in the local directory's data.db file
 engine = create_engine('sqlite:///survey.db')
@@ -27,6 +29,7 @@ class Courses(Base):
 	name = Column(String)
 	offering = Column(String(10))
 	status = Column(String)
+	closing_date = Column(String)
 
 # Enrolments table
 class Enrolments(Base):
@@ -86,12 +89,14 @@ class Database(object):
 	def populate_table(self):
 		session = self.DBSession()
 
-		# Add courses details in the database	
+		# Add courses details in the database
+		i = 1
 		with open('courses.csv','r') as csv_in:
 			reader = csv.reader(csv_in)
 			for row in reader:
-				course = Courses(name = row[0], offering = row[1], status = 'None')
+				course = Courses(id = i, name = row[0], offering = row[1], status = 'None', closing_date = 'None')
 				self.add_row(session, course)
+				i += 1
 
 		# Add staff/student enrolments in the database	
 		with open('enrolments.csv','r') as csv_in:
@@ -119,14 +124,30 @@ class Database(object):
 		session.close()
 
 #####################################################################################################################################################
-	"""# Delete data from table
-	def delete_row(self, session, row):
-		try:
-			session.delete(row)
-		except Exception as e:
-			print(e)
+	#
+	def query_course_survey(self):
+		session = self.DBSession()
+
+		current = datetime.now()
+		current.strftime("%Y-%m-%d")
+
+		for course in session.query(Courses).all():
+			
+			if course.closing_date == 'None':
+				print('no course survey for ', course.name, course.offering, course.status, course.closing_date)
+				continue
+
+			else:
+				print('active course survey for ', course.name, course.offering, course.status, course.closing_date)
+				td = datetime.strptime(course.closing_date, '%Y-%m-%d')
+				print('current = ', current, 'td = ', td, 'current < td = ', current < td)
+
+				if (current < td) == False:
+					print('changing')
+					session.query(Courses).filter(Courses.name == course.name).filter(Courses.offering ==  course.offering).update(values = {Courses.status:'closed'})
+					print('changed')
+
 		session.commit()
-		session.close() """
 
 #####################################################################################################################################################
 	# Get question corresponding to specific question name
@@ -216,7 +237,7 @@ class Database(object):
 				if (w.name,w.offering) not in read_enrols:
 					ws = w.name,w.offering
 					read_enrols.append(ws)
-					enrol_survey_status.append((w.name,w.offering,w.status))
+					enrol_survey_status.append((w.name,w.offering,w.status,w.closing_date))
 
 		# From the student's enrolments, check for enrolled course surveys
 		if role == 'student':
@@ -224,7 +245,7 @@ class Database(object):
 				for v in session.query(Courses).filter(Courses.name == user[0]).filter(Courses.offering == user[1]):
 					if (v.name,v.offering) not in read_enrols:
 						read_enrols.append((v.name,v.offering))
-						enrol_survey_status.append((v.name,v.offering,v.status))
+						enrol_survey_status.append((v.name,v.offering,v.status,v.closing_date))
 
 		print(enrol_survey_status)
 		return enrol_survey_status
@@ -243,12 +264,11 @@ class Database(object):
 
 #####################################################################################################################################################
 	# Create a course survey, add the selected questions to Surveys and change it's status in Courses to 'review'
-	def create_survey(self, course_title, questions):
+	def create_survey(self, course_title, questions, date):
 		session = self.DBSession()
 		
-		session.query(Courses).filter(Courses.name == course_title[0]).filter(Courses.offering ==  course_title[1]).update(values = {Courses.status:'review'})
+		session.query(Courses).filter(Courses.name == course_title[0]).filter(Courses.offering ==  course_title[1]).update(values = {Courses.status:'review',Courses.closing_date:date})
 
-		print('questions = ', questions)
 		for q in questions:
 			survey = Surveys(name = course_title[0], offering = course_title[1], question_name = q, added_by = 'admin')
 			self.add_row(session, survey)
@@ -284,7 +304,6 @@ class Database(object):
 		already_read = []
 		session = self.DBSession()
 
-		print('user_id = ', zid)
 		for e in session.query(Enrolments).filter(Enrolments.user_id == zid).all():
 			if (e.course_name,e.course_offering) not in already_read:
 				already_read.append((e.course_name,e.course_offering))
@@ -300,9 +319,8 @@ class Database(object):
 
 		for s in session.query(Courses).filter(Courses.status == status).all():
 			if [s.name, s.offering] not in st:
-				st.append([s.name, s.offering])
+				st.append([s.name, s.offering, s.closing_date])
 
-		print('st = ', st)
 		return st
 
 #####################################################################################################################################################
@@ -320,13 +338,10 @@ class Database(object):
 		for s in session.query(Surveys).filter(Surveys.name == course[0]).filter(Surveys.offering == course[1]):
 			survey_questions.append((s.question_name,s.added_by))
 
-		print(survey_questions)
-
 		for quest in survey_questions:
 			element = session.query(Questions).filter(Questions.name == quest[0]).one()
 			questions_list.append([element.name,element.types,element.responses,quest[1]])
 
-		print(questions_list)
 		return questions_list
 
 #####################################################################################################################################################
@@ -391,7 +406,7 @@ class Database(object):
 		results = []
 		session = self.DBSession()
 		course = course_name.split('_')
-		print(course)
+
 		for res in session.query(Responses).filter(Responses.course_name == course[0]).filter(Responses.offering == course[1]):
 			print(res.question,res.response)
 			results.append([res.question,res.response])
@@ -399,25 +414,3 @@ class Database(object):
 		return results
 
 #####################################################################################################################################################
-
-
-
-'''
-database = Database()
-try:
-	database.populate_table()
-except:
-	pass
-database.submit_survey('100', 'COMP9333', '17s2', [('What is your name?', 'Karl Ambosta'), ('What is your age?', '19')])
-try:
-	i = database.survey_results('COMP9333', '17s2')
-	for e in i:
-		print(e.course_name, e.offering, e.question, e.response)
-
-except Exception as e:
-	print(e)
-
-for q in database.get_admin_questions():
-		print(q.name, q.types, q.option, q.responses)
-'''
-

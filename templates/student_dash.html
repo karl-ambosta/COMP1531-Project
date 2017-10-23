@@ -19,7 +19,7 @@
                         {% if a[0] == s[0] %}
                             {% if a[1] == s[1] %}
                                 {% if a[2] != 'complete' %}
-                                    <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}_1">{{s[0]}} {{s[1]}}</button> - Open Survey <br><br>
+                                    <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}_1">{{s[0]}} {{s[1]}}</button> - Open Survey → <em>Closing Date : {{ s[3] }}</em> <br><br>
                                 {% else %}
                                     <b>{{ s[0] }} {{ s[1] }}</b> - Completed <br> <br>
                                 {% endif %}
