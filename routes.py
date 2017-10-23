@@ -1,10 +1,6 @@
 from flask import Flask, redirect, render_template, request, url_for, session
 from flask_login import LoginManager,login_user, current_user, login_required, logout_user
 from server import app,login_manager
-from model import *
-from authenticate import *
-# from database import *
-from database2 import *
 from Assignment_Class import *
 from collections import Counter
 from datetime import *
@@ -298,7 +294,8 @@ def survey():
                         qi = q[0],i
                         submitted.append(qi)
 
-            database.submit_survey(user_id, clicked_survey[0], submitted)
+            u_id = current_user.get_id()
+            database.submit_survey(u_id, clicked_survey[0], submitted)
 
             return redirect(url_for("complete"))
 
@@ -403,6 +400,7 @@ def student_dash():
             s = request.form["input"].split('_')
             
             if s[2] == '1':
+
                 clicked_survey[:] = []                              # resetting list
                 s.remove('1')
                 string = '_'.join(s)

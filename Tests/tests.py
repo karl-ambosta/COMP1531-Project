@@ -7,31 +7,7 @@ import sqlite3
 from sqlalchemy import exc, orm
 import warnings
 
-database = Database()
-
-class Test_Add_Questions(unittest.TestCase):
-
-	def setUp(self):
-		self.database = Database()
-
-	def test_successfully_add_question(self):
-		q = Questions(name = 'Question 1?', types = 'Text', option = 'Mandatory', responses = None)
-		database.add_question(q)
-		qu = database.get_question('Question 1?')
-		self.assertEqual(qu.name, 'Question 1?')
-		self.assertEqual(qu.types, 'Text')
-		self.assertEqual(qu.option, 'Mandatory')
-		self.assertEqual(qu.responses, None)
-
-	def test_question_with_duplicate_name(self):
-		q = Questions(name = 'Question 1?', types = 'Text', option = 'Mandatory', responses = None)
-		database.add_question(q)
-		q2 = Questions(name = 'Question 1?', types = 'Text', option = 'Optional', responses = None)
-		with self.assertRaises(exc.IntegrityError):
-			database.add_question(q2)
-
-	def tearDown(self):
-		os.remove('survey.db')
+#database = Database()
 
 class Test_Create_Survey(unittest.TestCase):
 	
@@ -41,20 +17,20 @@ class Test_Create_Survey(unittest.TestCase):
 	def test_succesfully_create_survey(self):
 		questions_list = ['Do you enjoy COMP1531?', 'How do you find the lectures?', 'Does your lecturer clearly explain content?']
 		length = len(questions_list)
-		database.create_survey(['COMP1531', '17s2'], ['Do you enjoy COMP1531?', 'How do you find the lectures?', 'Does your lecturer clearly explain content?'], '2018-01-01')
-		data = database.query_survey('COMP1531', '17s2')
+		self.database.create_survey(['COMP1531', '17s2'], ['Do you enjoy COMP1531?', 'How do you find the lectures?', 'Does your lecturer clearly explain content?'], '2018-01-01')
+		data = self.database.query_survey('COMP1531', '17s2')
 		self.assertEqual(len(data), length)
 		
 	def test_survey_with_no_questions(self):
 		questions_list = []
 		with self.assertRaises(ValueError):
-			database.create_survey(['COMP1531', '17s2'], questions_list, '2017-10-29')
+			self.database.create_survey(['COMP1531', '17s2'], questions_list, '2017-10-29')
 
 	def test_invalid_closing_date(self):
 		td = '2012-09-28'
 		questions_list = ['Do you enjoy COMP1531?', 'How do you find the lectures?', 'Does your lecturer clearly explain content?']
 		with self.assertRaises(ValueError):
-			database.create_survey(['COMP1531', '17s2'], questions_list, td)
+			self.database.create_survey(['COMP1531', '17s2'], questions_list, td)
 		
 	def tearDown(self):
 		os.remove('survey.db')
@@ -66,16 +42,16 @@ class Test_Delete_Question(unittest.TestCase):
 	
 	def test_successfully_delete_question(self):
 		q = Questions(name = 'What are your thoughts on the lectures', types = 'Text', option = 'Mandatory', responses = None)
-		database.add_question(q)
-		database.delete_question('What are your thoughts on the lectures')
-		check = database.get_question('What are your thoughts on the lectures')
+		self.database.add_question(q)
+		self.database.delete_question('What are your thoughts on the lectures')
+		check = self.database.get_question('What are your thoughts on the lectures')
 		self.assertEqual(check, None)
 	
 	def test_delete_question_not_present(self):
 		q = Questions(name = 'What are your thoughts on the lectures', types = 'Text', option = 'Mandatory', responses = None)
-		database.add_question(q)
+		self.database.add_question(q)
 		with self.assertRaises(ValueError):
-			database.delete_question('How do you find COMP1531?')
+			self.database.delete_question('How do you find COMP1531?')
 	
 	def tearDown(self):
 		os.remove('survey.db')
@@ -176,6 +152,33 @@ class TestAuthenticate(unittest.TestCase):
         user = self.database.authenticate(id,password)
         self.assertEqual(user.get_id(), 100)
         self.assertEqual(user.get_role(), 'student')
+
+    def tearDown(self):
+        os.remove('survey.db')
+
+class TestEnrolment(unittest.TestCase):
+
+    def setUp(self):
+        self.database = Database() 
+        self.database.populate_table()
+
+    # Test that student enrolment details are properly stores and queried
+    def test_student_enrolment(self):
+        enrols = self.database.get_enrolment_surveys(100, 'student')
+        self.assertEqual(enrols[0][0],'COMP9333')
+        self.assertEqual(enrols[0][1],'17s2')
+        self.assertEqual(enrols[1][0],'COMP9334')
+        self.assertEqual(enrols[1][1],'17s2')
+        self.assertEqual(enrols[2][0],'COMP2911')
+        self.assertEqual(enrols[2][1],'17s2')
+        self.assertEqual(enrols[3][0],'COMP1000')
+        self.assertEqual(enrols[3][1],'17s2')
+
+    # Test that staff enrolment details are properly stores and queried
+    def test_staff_enrolment(self):
+        enrols = self.database.get_enrolment_surveys(50, 'staff')
+        self.assertEqual(enrols[0][0],'COMP4931')
+        self.assertEqual(enrols[0][1],'18s1')
 
     def tearDown(self):
         os.remove('survey.db')
