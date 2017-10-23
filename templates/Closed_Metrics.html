@@ -1,74 +1,150 @@
 <!doctype html>
 <html>
-	<head>
-        <title>Metrics Page</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <head>
+        <title>Student dashboard</title>
     </head>
-    
-    <body>
 
-    	<Form method="POST">
-            <button onclick="goBack()">Back</button>
-            <br>
-        </Form>
+  <body>
+    <title>W3.CSS Template</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+    html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
+    </style>
 
-        <h1>Metrics</h1>
+    <body class="w3-light-grey">
 
-            {% if total[0] %}
-                <h4>{{ total[0] }} completed survey(s) for <em>{{ name[0] }} {{ name[1] }}</em></h4>
-            {% else %}
-                <h4>0 completed survey(s) for <em>{{ name[0] }} {{ name[1] }}</em></h4>
-            {%endif%}
+    <!-- Top container -->
+    <div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
+      <button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="w3_open();"><i class="fa fa-bars"></i>  Menu</button>
+      <span class="w3-bar-item w3-right">UNSW Survey System</span>
+    </div>
 
-        {% for d in diff %}
-            <b>Question : {{ d }}</b> <br>
-                {% for i in data %}
-                    {% if i[0] == d %}
-                    <em> Question Type: {{ i[1] }}</em> <br>
-                    {% endif %}
-                {% endfor %}
-<ul>
-            {% for r in results[loop.index0] %}
-                {% for e in data %}
-                    {% if e[0] == d %}
-                        {% if e[1] == 'Multiple Choice' %}
-                            <li><i>{{ r[0] }}</i></li> 
+    <!-- Sidebar/menu -->
+    <nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
+      <div class="w3-container w3-row">
+        <div class="w3-col s4">
+          <img src="http://dsi-vd.github.io/patternlab-vd/images/fpo_avatar.png" class="w3-circle w3-margin-right" style="width:46px">
+        </div>
+        <div class="w3-col s8 w3-bar">
+          <span>Welcome, <strong>{{user}}</strong></span><br>
+          <a href="http://127.0.0.1:5000" class="w3-bar-item w3-button"><i class="fa fa-sign-out"></i></a>
+        </div>
+      </div>
+      <hr>
+      <div class="w3-container">
+        <h5>Dashboard</h5>
+      </div>
+      <div class="w3-bar-block">
+        <a href="#" class="w3-bar-item w3-button w3-padding "><i class="fa fa-users fa-fw"></i>  Overview</a>
+        <a href="http://127.0.0.1:5000/closed_metrics" class="w3-bar-item w3-button w3-padding w3-yellow"><i class="fa fa-bar-chart fa-fw"></i>View Metrics</a>
+      </div>
+    </nav>
 
-                            {% set myvar =  r[1]/total[loop.index0] * 100 %}
 
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{r[1]}" aria-valuemin="0" style="width:{{ myvar }}%">{{ r[1] }}</div> <br>
-                            </div>
+    <!-- Overlay effect when opening sidebar on small screens -->
+    <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
 
-                        {% else %}
-                            <li><i>{{ r[0] }}</i></li>
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
-            {% endfor %}
-            <br>
-            </ul>
-        {% endfor %}
-        <br>
+    <!-- !PAGE CONTENT! -->
+    <div class="w3-main" style="margin-left:300px;margin-top:43px;">
 
-<style>
-    div {
-        width: 50%;
-        text-align: center;
+      <div class="w3-row-padding w3-margin-bottom">
+        <div class="w3-third">
+
+					<Form method="POST">
+		            <button onclick="goBack()">Back</button>
+		            <br>
+		        </Form>
+
+		        <h1>Metrics</h1>
+
+		            {% if total[0] %}
+		                <h4>{{ total[0] }} completed survey(s) for <em>{{ name[0] }} {{ name[1] }}</em></h4>
+		            {% else %}
+		                <h4>0 completed survey(s) for <em>{{ name[0] }} {{ name[1] }}</em></h4>
+		            {%endif%}
+
+		        {% for d in diff %}
+		            <b>Question : {{ d }}</b> <br>
+		                {% for i in data %}
+		                    {% if i[0] == d %}
+		                    <em> Question Type: {{ i[1] }}</em> <br>
+		                    {% endif %}
+		                {% endfor %}
+		<ul>
+		            {% for r in results[loop.index0] %}
+		                {% for e in data %}
+		                    {% if e[0] == d %}
+		                        {% if e[1] == 'Multiple Choice' %}
+		                            <li><i>{{ r[0] }}</i></li>
+
+		                            {% set myvar =  r[1]/total[loop.index0] * 100 %}
+
+		                            <div class="progress">
+		                                <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{r[1]}" aria-valuemin="0" style="width:{{ myvar }}%">{{ r[1] }}</div> <br>
+		                            </div>
+
+		                        {% else %}
+		                            <li><i>{{ r[0] }}</i></li>
+		                        {% endif %}
+		                    {% endif %}
+		                {% endfor %}
+		            {% endfor %}
+		            <br>
+		            </ul>
+		        {% endfor %}
+		        <br>
+
+		<style>
+		    div {
+		        width: 50%;
+		        text-align: center;
+		    }
+
+		</style>
+
+		<script>
+		function goBack() {
+		    window.history.back();
+		}
+		</script>
+
+
+      <!-- Footer -->
+      <footer class="w3-container w3-padding-16 w3-light-grey">
+        <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
+      </footer>
+
+      <!-- End page content -->
+    </div>
+
+    <script>
+    // Get the Sidebar
+    var mySidebar = document.getElementById("mySidebar");
+
+    // Get the DIV with overlay effect
+    var overlayBg = document.getElementById("myOverlay");
+
+    // Toggle between showing and hiding the sidebar, and add overlay effect
+    function w3_open() {
+        if (mySidebar.style.display === 'block') {
+            mySidebar.style.display = 'none';
+            overlayBg.style.display = "none";
+        } else {
+            mySidebar.style.display = 'block';
+            overlayBg.style.display = "block";
+        }
     }
 
-</style>
-
-<script>
-function goBack() {
-    window.history.back();
-}
-</script>
-
-
-    </body>
+    // Close the sidebar with the close button
+    function w3_close() {
+        mySidebar.style.display = "none";
+        overlayBg.style.display = "none";
+    }
+    </script>
+    </style>
+  </body>
 </html>

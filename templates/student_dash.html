@@ -1,40 +1,120 @@
 <!doctype html>
 <html>
     <head>
-        <title>Student Dashboard page</title>
+        <title>Student dashboard</title>
     </head>
 
-    <body>
+  <body>
+    <title>W3.CSS Template</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+    html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
+    </style>
 
-        <h1>Student Dashboard: {{ user }}</h1>
+    <body class="w3-light-grey">
+
+    <!-- Top container -->
+    <div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
+      <button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="w3_open();"><i class="fa fa-bars"></i>  Menu</button>
+      <span class="w3-bar-item w3-right">UNSW Survey System</span>
+    </div>
+
+    <!-- Sidebar/menu -->
+    <nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
+      <div class="w3-container w3-row">
+        <div class="w3-col s4">
+          <img src="http://dsi-vd.github.io/patternlab-vd/images/fpo_avatar.png" class="w3-circle w3-margin-right" style="width:46px">
+        </div>
+        <div class="w3-col s8 w3-bar">
+          <span>Welcome, <strong>{{user}}</strong></span><br>
+          <a href="http://127.0.0.1:5000" class="w3-bar-item w3-button"><i class="fa fa-sign-out"></i></a>
+        </div>
+      </div>
+      <hr>
+      <div class="w3-container">
+        <h5>Dashboard</h5>
+      </div>
+      <div class="w3-bar-block">
+        <a href="http://127.0.0.1:5000/Student_Dash" class="w3-bar-item w3-button w3-padding w3-yellow"><i class="fa fa-users fa-fw"></i>  Overview</a>
+        <a href="http://127.0.0.1:5000/closed_metrics" class="w3-bar-item w3-button w3-padding"><i class="fa fa-bar-chart fa-fw"></i>View Metrics</a>
+      </div>
+    </nav>
+
+
+    <!-- Overlay effect when opening sidebar on small screens -->
+    <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+
+    <!-- !PAGE CONTENT! -->
+    <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+
+      <!-- Header -->
+      <header class="w3-container" style="padding-top:22px">
+        <h5><b><i class="fa fa-dashboard"></i> Student Dashboard</b></h5>
+      </header>
+
+      <div class="w3-row-padding w3-margin-bottom">
+        <div class="w3-third">
 
         <Form method="POST">
-            <button type="submit" name="input" value="1">Logout</button>
-            <br>
+          <h3>Surveys:</h3>
+              {% for s in surv %}
+                  {% if s[2] == 'active' %}
+                      {% for a in enrols %}
+                          {% if a[0] == s[0] %}
+                              {% if a[1] == s[1] %}
+                                  {% if a[2] != 'complete' %}
+                                      <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}_1">{{s[0]}} {{s[1]}}</button> - Open Survey → <em>Closing Date : {{ s[3] }}</em> <br><br>
+                                  {% else %}
+                                      <b>{{ s[0] }} {{ s[1] }}</b> - Completed <br> <br>
+                                  {% endif %}
+                              {% endif %}
+                          {% endif %}
+                      {% endfor %}
+                  {% elif s[2] == 'closed' %}
+                      <button type="submit" name="input" value="{{ s[0] }}_{{ s[1] }}_2">{{ s[0] }} {{ s[1] }}</button></b> - Closed - View Survey Results<br> <br>
+                  {% else %}
+                      <b>{{ s[0] }} {{ s[1] }}</b> - Not Released/Created Yet<br> <br>
+                  {% endif %}
+              {% endfor %}
+          <br>
+          </Form>
 
-        <h3>Surveys:</h3>
-            {% for s in surv %}
-                {% if s[2] == 'active' %}
-                    {% for a in enrols %}
-                        {% if a[0] == s[0] %}
-                            {% if a[1] == s[1] %}
-                                {% if a[2] != 'complete' %}
-                                    <button type="submit" name="input" value="{{s[0]}}_{{s[1]}}_1">{{s[0]}} {{s[1]}}</button> - Open Survey <br><br>
-                                {% else %}
-                                    <b>{{ s[0] }} {{ s[1] }}</b> - Completed <br> <br>
-                                {% endif %}
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
-                {% elif s[2] == 'closed' %}
-                    <button type="submit" name="input" value="{{ s[0] }}_{{ s[1] }}_2">{{ s[0] }} {{ s[1] }}</button></b> - Closed - View Survey Results<br> <br>
-                {% else %}
-                    <b>{{ s[0] }} {{ s[1] }}</b> - Not Released/Created Yet<br> <br>
-                {% endif %}
-            {% endfor %}
-        <br>
+      <!-- Footer -->
+      <footer class="w3-container w3-padding-16 w3-light-grey">
+        <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
+      </footer>
 
+      <!-- End page content -->
+    </div>
 
-        </Form>
-    </body>
+    <script>
+    // Get the Sidebar
+    var mySidebar = document.getElementById("mySidebar");
+
+    // Get the DIV with overlay effect
+    var overlayBg = document.getElementById("myOverlay");
+
+    // Toggle between showing and hiding the sidebar, and add overlay effect
+    function w3_open() {
+        if (mySidebar.style.display === 'block') {
+            mySidebar.style.display = 'none';
+            overlayBg.style.display = "none";
+        } else {
+            mySidebar.style.display = 'block';
+            overlayBg.style.display = "block";
+        }
+    }
+
+    // Close the sidebar with the close button
+    function w3_close() {
+        mySidebar.style.display = "none";
+        overlayBg.style.display = "none";
+    }
+    </script>
+    </style>
+  </body>
 </html>
