@@ -9,6 +9,7 @@ from Assignment_Class import *
 from collections import Counter
 from datetime import *
 from time import *
+from functools import wraps
 
 admins = {}
 flag = 0
@@ -26,45 +27,52 @@ c_s_data = []
 enrolments = []
 
 
-def get_user(user_id):
-    """
-    Your get user should get user details from the database
-    """
-    return User(user_id)
-
 @login_manager.user_loader
 def load_user(user_id):
-    # get user information from db
-    user = get_user(user_id)
-    return user
+    return database.get_user(user_id)
+
+def login_required(role):
+    def wrap(fn):
+        @wraps(fn)
+        def decor(*args, **kwargs):
+
+            # Check if user is authenticated
+            if current_user.is_authenticated == False:
+                return login_manager.unauthorized()
+
+            # Check if user is correct role
+            if current_user.get_role() != role:
+                return login_manager.unauthorized()
+
+            return fn(*args, **kwargs)
+
+        return decor
+    return wrap
 
 @app.route("/", methods=["GET", "POST"])
 def login():
-
-    global user_id
-
 
     if request.method == "POST":
 
         user_id = request.form["name"]
         password = request.form["password"]
 
-        # Send this information to the authentication module
-        result = authenticate(user_id,password)
+        # Authenticate the user
+        u = database.authenticate(user_id,password)
 
-        if result == 'admin':
-            user = User(user_id)
-            login_user(user)
+        if u == None:
+            return render_template("login.html", msg = 'Login unsuccessful')
+
+        elif u.get_role() == 'admin':
+            login_user(u)
             return redirect(url_for("dashboard"))
 
-        elif result == 'staff':
-            user = User(user_id)
-            login_user(user)
+        elif u.get_role() == 'staff':
+            login_user(u)
             return redirect(url_for("staff_dash"))
 
-        elif result == 'student':
-            user = User(user_id)
-            login_user(user)
+        elif u.get_role() == 'student':
+            login_user(u)
 
             # gets the courses that student is enrolled in. Return value is in the form of a list.
             enrolments = database.get_user_enrolments(user_id)
@@ -75,24 +83,12 @@ def login():
             return redirect(url_for("student_dash"))
 
         else:
-            return render_template("login.html")
-
-        return redirect(url_for("dashboard"))
-
-    # Fill in databases
-    # Possibly set a global flag to ensure that this only happens once
-    try:
-        database.populate_table()
-    except:
-        pass
-
-    database.query_course_survey()
+            return render_template("login.html", msg = 'Login unsuccessful')
 
     return render_template("login.html")
 
-
 @app.route("/Dashboard", methods=["GET", "POST"])
-@login_required
+@login_required('admin')
 def dashboard():
 
     global user_id
@@ -113,23 +109,23 @@ def dashboard():
             f = close.split('_')
             database.close_survey(f)
 
-    return render_template("dashboard.html", created = database.get_survey_of_status('review'), active = database.get_survey_of_status('active'), closed = database.get_survey_of_status('closed')) # surveys = database.get_enrolment_surveys(user_id, 'admin'))
+    return render_template("dashboard.html", review = database.get_survey_of_status('review'), active = database.get_survey_of_status('active'), closed = database.get_survey_of_status('closed'))
 
-
+# Create a survey
 @app.route("/Create", methods=["GET", "POST"])
+@login_required('admin')
 def create():
 
     if request.method == "POST":
 
         # if admin wishes to cancel the creation of a survey
         if request.form["input"] == "1":
-            return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review')))
+            return redirect(url_for("dashboard"))
 
         # when the admin chooses a offering period
         if request.form["input"] == "2":
             choice = 'offer'
             offering = request.form["offering"]
-
 
             c = database.get_courses()
             o = []
@@ -160,34 +156,23 @@ def create():
 
             # Check which questions were submitted
             qus = request.form.getlist('check')
+            print('qus = ', qus)
 
             chosen_date = request.form["date"]
-            current = datetime.now()
-            current.strftime("%Y-%m-%d")
-            td = datetime.strptime(chosen_date, '%Y-%m-%d')
-            print('td = ', td)
-
-            # If closing dat chosen is before the current date, reload page
-            #if td > current == False:
-            #    return render_template("create.html", questions = database.get_admin_questions(), courses = database.get_courses(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
-
-            # if no questions were selected to create survey with, reload page
-            if qus == []:
-                print("No questions chosen")
-                return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
             
-
-            # Else create survey
-            else:
+            try:
                 database.create_survey(course_name,qus,chosen_date)
+            except ValueError:
+                return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = 'offer', courseoff = 'course', offers = '')
 
-            return redirect(url_for("dashboard", surveys = database.get_survey_of_status('review')))
+            return redirect(url_for("dashboard"))
 
     return render_template("create.html", questions = database.get_admin_questions(), offerings = database.get_offerings(), choice = '', offers = '')
 
 
+# Add a question to the question pool
 @app.route("/Question", methods=["GET", "POST"])
-@login_required
+@login_required('admin')
 def question():
 
     if request.method == "POST":
@@ -198,15 +183,15 @@ def question():
 
         # ADD QUESTION
         if request.form["input"] == "2":
-            return render_template("question.html", add_question = True, questions = database.get_admin_questions())
+            return render_template("question.html", add_question = True, questions = database.get_all_questions())
 
         # DELETE QUESTION
         if request.form["input"] == "3":
-            return render_template("question.html", delete_question = True, questions = database.get_admin_questions())
+            return render_template("question.html", delete_question = True, questions = database.get_all_questions())
 
         # CANCEL - Cancel the creation of the current question
         if request.form["input"] == "4":
-            return render_template("question.html", questions = database.get_admin_questions())
+            return render_template("question.html", questions = database.get_all_questions())
 
         # Question has been entered
         if request.form["input"] == "5":
@@ -221,16 +206,16 @@ def question():
 
                 # Store the question details in a temporary session
                 session['Temp_Question'] = [qu,re,op]
-                return render_template("question.html", set_MC_resnum = True, questions = database.get_admin_questions())
+                return render_template("question.html", set_MC_resnum = True, questions = database.get_all_questions())
 
             # Store text-response question in database
             else:
 
                 # Add question to database
-                # q = quest(qu,op,re)
-                database.add_question(qu, 'Text', op, None)
+                question = Questions(name = qu, types = 'Text', option = op, responses = None)
+                database.add_question(question)
 
-                return render_template("question.html", set_MC_resnum = False, questions = database.get_admin_questions())
+                return render_template("question.html", set_MC_resnum = False, questions = database.get_all_questions())
 
         # Collect desired number of MC responses
         if request.form["input"] == "6":
@@ -238,7 +223,7 @@ def question():
             l = session['Temp_Question']
             l.append(n)
             session['Temp_Question'] = l
-            return render_template("question.html", MC_resnum = n, questions = database.get_admin_questions())
+            return render_template("question.html", MC_resnum = n, questions = database.get_all_questions())
 
         # Store MC-response question in database
         if request.form["input"] == "7":
@@ -253,15 +238,20 @@ def question():
                 responses.append(request.form[str(i)])
                 res_str = ",".join(responses)
 
-            # Remove temporary session data
-            session.pop('Temp_Question', None)
-
+            print(responses)
             # Add question to the database
-            # q = quest(data[0],data[1],data[2])
-            # q.add_responses(responses)
-            database.add_question(data[0], data[1], data[2], res_str)
+            question = Questions(name = data[0], types = data[1], option = data[2], responses = res_str)
 
-            return render_template("question.html", questions = database.get_admin_questions())
+            try:
+                database.add_question(question)
+
+                # Remove temporary session data
+                session.pop('Temp_Question', None)
+            
+                return render_template("question.html", questions = database.get_all_questions())
+
+            except ValueError:
+                return render_template("question.html", MC_resnum = n, questions = database.get_all_questions())
 
         # Delete the specified question from the survey
         if request.form["input"] == "8":
@@ -269,9 +259,9 @@ def question():
             q = request.form["delq"]
             database.delete_question(q)
 
-            return render_template("question.html", questions = database.get_admin_questions())
+            return render_template("question.html", questions = database.get_all_questions())
 
-    return render_template("question.html", questions = database.get_admin_questions())
+    return render_template("question.html", questions = database.get_all_questions())
 
 @app.route("/Survey", methods=["GET", "POST"])
 def survey():
@@ -316,7 +306,7 @@ def survey():
 
 
 @app.route("/Staff_Dash", methods=["GET", "POST"])
-@login_required
+@login_required('staff')
 def staff_dash():
 
     global different
@@ -352,6 +342,7 @@ def staff_dash():
                         c_s_data.append(c[0])
 
                 return redirect(url_for("review"))
+            
             else:
                 s.remove('2')
                 string = '_'.join(s)
@@ -387,11 +378,11 @@ def staff_dash():
 
                 return redirect(url_for("closed_metrics"))
             
-
-    return render_template("staff_dash.html", user = user_id, user_enrols = database.get_enrolment_surveys(user_id, 'staff'))
+    u_id = current_user.get_id()
+    return render_template("staff_dash.html", user = u_id, user_enrols = database.get_enrolment_surveys(u_id, 'staff'))
 
 @app.route("/Student_Dash", methods=["GET", "POST"])
-@login_required
+@login_required('student')
 def student_dash():
 
     global different
@@ -462,7 +453,8 @@ def student_dash():
 
                 return redirect(url_for("closed_metrics"))
 
-    return render_template("student_dash.html", user = user_id, enrolments = enrolments, surv = database.get_enrolment_surveys(user_id, 'student'), enrols = database.get_user_enrolments(user_id))
+    u_id = current_user.get_id()
+    return render_template("student_dash.html", user = u_id, enrolments = enrolments, surv = database.get_enrolment_surveys(u_id, 'student'), enrols = database.get_user_enrolments(u_id))
 
 @app.route('/logout')
 def logout():

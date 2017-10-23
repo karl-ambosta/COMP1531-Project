@@ -14,12 +14,33 @@ Base = declarative_base()
 # Define attributes in each class to correspond to columns in table
 
 # Passwords Table
-class Users(Base):
+class User(Base):
 
 	__tablename__ = 'user'
 	zid = Column(Integer, primary_key=True)
 	password = Column(String, nullable = False)
 	role = Column(String, nullable = False)
+	auth = Column(String, nullable = False)
+
+	def get_id(self):
+		return self.zid
+
+	def get_role(self):
+		return self.role
+
+	# Flask login functions:
+	
+	def is_active(self):
+		return True
+
+	def is_anonymous(self):
+		return False
+
+	def get_id(self):
+		return self.zid
+
+	def is_authenticated(self):
+		return self.auth
 
 # Course Table
 class Courses(Base):
@@ -31,17 +52,22 @@ class Courses(Base):
 	status = Column(String)
 	closing_date = Column(String)
 
+	def get_name(self):
+		return self.name
+
+	def get_offering(self):
+		return self.offering
+
 # Enrolments table
 class Enrolments(Base):
 
 	__tablename__ = 'enrolments'
 	id = Column(Integer, primary_key=True)
 	user_id = Column(Integer, ForeignKey('user.zid'))
-	user = relationship(Users)
+	user = relationship(User)
 	course_name = Column(String)
 	course_offering = Column(String)
 	status = Column(String)
-	# offer = relationship(Courses)
 
 # Questions table
 class Questions(Base):
@@ -51,6 +77,18 @@ class Questions(Base):
 	types = Column(String, nullable = False) # Multiple Choice or Text Based Response
 	option = Column(String, nullable = False) # Mandatory or Optional Question.
 	responses = Column(String) # The responses are for the multiple choice questions. Text questions have a blank response section.
+
+	def get_question(self):
+		return self.name
+
+	def get_type(self):
+		return self.types
+
+	def get_option(self):
+		return self.option
+
+	def get_responses(self):
+		return self.responses
 
 # Survey table
 class Surveys(Base):
@@ -85,7 +123,46 @@ class Database(object):
 		self.DBSession = sessionmaker(bind=self.engine)
 
 #####################################################################################################################################################
-	# 
+	# return a specific user object given an id
+	def get_user(self, user_id):
+		session = self.DBSession()
+		u = session.query(User).filter(User.zid == user_id).first()
+		return u
+
+#####################################################################################################################################################
+	# Authenticate a user by checking the user's password
+	def authenticate(self, user_id, password):
+		session = self.DBSession()
+
+		# Query the user from the database
+		u = session.query(User).filter(User.zid == user_id).first()
+		if u == None:
+			return None
+		elif u.password == password:
+			return u
+		else:
+			return None
+
+#####################################################################################################################################################
+	# Gather surveys of a particular status
+	def get_closed_survey(self):
+		session = self.DBSession()
+		return session.query(Courses).filter(Courses.status == 'closed').all()
+
+	def get_review_survey(self):
+		session = self.DBSession()
+		return session.query(Courses).filter(Courses.status == 'review').all()
+
+	def get_active_survey(self):
+		session = self.DBSession()
+		return session.query(Courses).filter(Courses.status == 'active').all()
+
+	def get_all_questions(self):
+		session = self.DBSession()
+		return session.query(Questions).all()
+
+#####################################################################################################################################################
+	# Read from csv files and read them 
 	def populate_table(self):
 		session = self.DBSession()
 
@@ -106,14 +183,14 @@ class Database(object):
 				self.add_row(session, enrols)
 
 		# Add admin credentials in the database
-		user = Users(zid = '0', password = 'admin', role = 'admin')
+		user = User(zid = '0', password = 'admin', role = 'admin', auth = False)
 		self.add_row(session, user)
 
 		# Add staff/student in the database	
 		with open('passwords.csv','r') as csv_in:
 			reader = csv.reader(csv_in)
 			for row in reader:
-				user = Users(zid = row[0], password = row[1], role = row[2])
+				user = User(zid = row[0], password = row[1], role = row[2], auth = False)
 				self.add_row(session, user)
 
 #####################################################################################################################################################
@@ -124,7 +201,7 @@ class Database(object):
 		session.close()
 
 #####################################################################################################################################################
-	#
+	# Get survey corresponds to specified name
 	def query_course_survey(self):
 		session = self.DBSession()
 
@@ -150,7 +227,14 @@ class Database(object):
 		session.commit()
 
 #####################################################################################################################################################
-	# Get question corresponding to specific question name
+	# Query survey data
+	def query_survey(self, name, offering):
+		session = self.DBSession()
+		q = session.query(Surveys).filter(Surveys.name == name).filter(Surveys.offering == offering).all()
+		return q
+
+#####################################################################################################################################################
+	# Get multiple questions corresponding to specific question name
 	def query_question(self, name):
 		session = self.DBSession()
 		data_list = []
@@ -161,10 +245,16 @@ class Database(object):
 		return data_list
 
 #####################################################################################################################################################
+	# Single question correspinding to specific name
+	def get_question(self, name):
+		session = self.DBSession()
+		return session.query(Questions).filter(Questions.name == name).first()
+
+#####################################################################################################################################################
 	# Get user corressponding to specific user_id
 	def query_user(self, user_id):
 		session = self.DBSession()
-		user = session.query(Users).filter(Users.zid == user_id).first()
+		user = session.query(User).filter(User.zid == user_id).first()
 		session.close()
 		if user.zid is not None:
 			return user.zid
@@ -172,10 +262,21 @@ class Database(object):
 
 #####################################################################################################################################################
 	# Adding question to question pool
-	def add_question(self, name, types, option, responses):
+	def add_question(self, question):
+
+		# Check that multiple choice questions have responses
+		if question.get_type() == 'Multiple Choice':
+
+			resp_list = question.get_responses().split(',')
+
+			if not question.get_responses():
+				raise ValueError('ERROR: No multiple choice responses entered')
+
+			for r in resp_list:
+				if not r:
+					raise ValueError('ERROR: No multiple choice responses entered')
+
 		session = self.DBSession()
-		print('adding =>', name, types, option, responses)
-		question = Questions(name = name, types = types, option = option, responses = responses)
 		self.add_row(session, question)
 
 #####################################################################################################################################################
@@ -183,12 +284,13 @@ class Database(object):
 	def delete_question(self, name):
 		session = self.DBSession()
 		delete_q = session.query(Questions).filter(Questions.name == name).first()
-		print('deleting =>', delete_q.name, delete_q.types, delete_q.option, delete_q.responses)
+		if delete_q == None:
+			raise ValueError('could not find name in question pool')
 		session.delete(delete_q)
 		session.commit()
 
 #####################################################################################################################################################
-	# Gather all question for admin ONLY
+	# Gather all question
 	def get_admin_questions(self):
 		questions = []
 		session = self.DBSession()
@@ -264,17 +366,29 @@ class Database(object):
 
 #####################################################################################################################################################
 	# Create a course survey, add the selected questions to Surveys and change it's status in Courses to 'review'
-	def create_survey(self, course_title, questions, date):
+	def create_survey(self, course_title, questions, closing_date):
 		session = self.DBSession()
 		
-		session.query(Courses).filter(Courses.name == course_title[0]).filter(Courses.offering ==  course_title[1]).update(values = {Courses.status:'review',Courses.closing_date:date})
+		if not questions:
+			raise ValueError('No questions in survey')
+
+		current = datetime.now()
+		current.strftime("%Y-%m-%d")
+		td = datetime.strptime(closing_date, '%Y-%m-%d')
+		#chosen = closing_date.strftime('%Y-%m-%d')
+
+
+		if (current > td) == True:
+			raise ValueError('Invalid closing date. This date is in the past')
+
+		session.query(Courses).filter(Courses.name == course_title[0]).filter(Courses.offering ==  course_title[1]).update(values = {Courses.status:'review',Courses.closing_date:closing_date})
 
 		for q in questions:
 			survey = Surveys(name = course_title[0], offering = course_title[1], question_name = q, added_by = 'admin')
 			self.add_row(session, survey)
 
 		session.commit()
-
+	
 #####################################################################################################################################################
 	# Check the status of a named survey
 	def check_survey_status(self, course_title):
@@ -360,7 +474,6 @@ class Database(object):
 		survey = survey_title.split('_')
 
 		delete = session.query(Surveys).filter(Surveys.name == survey[0]).filter(Surveys.offering == survey[1]).filter(Surveys.question_name == question).first()
-		print('deleting =>', delete.name, delete.offering, delete.question_name, 'which was added by:', delete.added_by)
 		session.delete(delete)
 		session.commit()
 #####################################################################################################################################################

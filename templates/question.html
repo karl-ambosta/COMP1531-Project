@@ -92,13 +92,14 @@
                 {{ msg }}
             {% endif %}
             <hr>
+
             {% for q in questions %}
-                <b>{{ q[0] }}</b> <br>
-                <em>Response Type: {{q[1]}}</em> <br>
-                {{ q[2]}} Question <br>
-                    {% if q[1] == 'Multiple Choice' %}
-                        Response Options: 
-                        {{q[3]}}  
+                <b>{{ q.get_question() }}</b> <br>
+                <em>Response Type: {{q.get_type()}}</em> <br>
+                {{ q.get_option() }} <br>
+                    {% if q.get_type() == 'Multiple Choice' %}
+                        Response Options:
+                        {{q.get_responses()}}
                         <br>
                     {% endif %}
                 <hr>

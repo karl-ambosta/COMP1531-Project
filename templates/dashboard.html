@@ -15,13 +15,8 @@
 
         <h3>Surveys in Review Stage:</h3>
 
-            {% for f in surveys %}
-                {% if f[2] == 'review' %}
-                    {{ f[0] }} {{ f[1] }} <br>
-                {% endif %}
-            {% endfor %}
 
-            {% for c in created %}
+            {% for c in review %}
                     {{ c[0] }} {{ c[1] }} <br>
             {% endfor %}
 

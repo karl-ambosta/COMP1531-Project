@@ -1,12 +1,12 @@
 <!doctype html>
 <html>
-	<head>
+    <head>
         <title>Review Survey page</title>
     </head>
     
     <body>
-    	<Form method="POST">
-    		<button type="submit" name="input" value="0">Back</button>
+        <Form method="POST">
+            <button type="submit" name="input" value="0">Back</button>
             <h1>Please review the following survey for {{course_name[0]}}</h1>
             {% for cs in cs_data %}
 
@@ -48,15 +48,15 @@
 
             <h2>Add optional questions from pool</h2>
             {% for q in questions %}
-            	{% if q[0] not in cs_data %}
+                {% if q[0] not in cs_data %}
                     {% if q[2] == 'Optional' %}
-                	   <b>{{ q[0] }}</b> <br>
+                       <b>{{ q[0] }}</b> <br>
                        Response Type: {{q[1]}}
-                	   <button type="submit" name="input" value="{{q[0]}}_add">Add</button>
-                	   <hr>
+                       <button type="submit" name="input" value="{{q[0]}}_add">Add</button>
+                       <hr>
                     {% endif %}
                 {% endif %}
             {% endfor %}
-    	</Form>
+        </Form>
     </body>
 </html>
